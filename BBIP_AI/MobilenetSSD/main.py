@@ -72,8 +72,20 @@ def apply_blur(frame, objs, scale_x, scale_y, verified):
         if not verifyFace(embedding, verified):
             continue
         else:
+            routesCrd = np.array(routesCrd)
+            # y좌표 추출
+            y_coords = routesCrd[:, 1] 
+            # y좌표의 최소값과 최대값 계산
+            y1 = int(np.min(y_coords))
+            y2 = int(np.max(y_coords))
+            # 37번 점부터 46번 점까지의 x좌표 추출
+            x_coords = routesCrd[17:, 0]
+            # x좌표의 최소값과 최대값 계산
+            x1 = int(np.min(x_coords))
+            x2 = int(np.max(x_coords))
+            face_region = frame[y1:y2, x1:x2]
             blurred_face = cv2.GaussianBlur(face_region, (15, 15), 100)
-            frame[routesCrd] = blurred_face
+            frame[y1:y2, x1:x2] = blurred_face
     
     return frame
 
@@ -82,6 +94,8 @@ def main():
     capture_count = 0  # 캡처된 이미지 수를 세기 위한 변수
     global cnt  # 전역 변수 사용 선언
     global sum
+    cnt=0
+    sum=0
     
     while True:
         start_time = time.time()  # 시작 시간 측정
@@ -111,14 +125,12 @@ def main():
         cv2.imshow('face detector', image_origin_size)
         end_time = time.time()
         print(end_time-start_time)
+        sum+=end_time-start_time
+        cnt+=1
+        print(sum/cnt)
         k = cv2.waitKey(30) & 0xff
         if k == 27:  # ESC 키를 눌러 종료
             break
-        elif k == ord('c'):  # 'c' 키를 눌러 캡처
-            capture_count += 1
-            filename = f"capture_{capture_count}.png"
-            cv2.imwrite(filename, image)  # 현재 프레임 저장
-            print(f"Captured: {filename}")
 
     cap.release()
     cv2.destroyAllWindows()

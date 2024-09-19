@@ -17,14 +17,19 @@ def faceDetection(image):
 
     # 얼굴 검출
     boxes, _ = mtcnn.detect(image_rgb)
+        # 얼굴이 검출되지 않은 경우 None 반환
+    if boxes is None:
+        return None
+    
     return boxes
+
 
 def faceAlignment(img, face):
     baseImg = img.copy()
 
     dlib_box = dlib.rectangle(int(face[0]), int(face[1]), int(face[2]), int(face[3]))
     
-    landmarkDetector = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    landmarkDetector = dlib.shape_predictor("utils/shape_predictor_68_face_landmarks.dat")
     landmarks=landmarkDetector(img,dlib_box)
     landmarksTuples = []
     for i in range(0,68):
@@ -54,7 +59,9 @@ def faceAlignment(img, face):
     
     # 얼굴 부분만 추출
     out[mask] = img[mask]
+    return routesCrd, landmarksTuples, out
 
+def faceRotation(routesCrd, landmarksTuples, out):
      # 회전 각도 계산
     delta_y = abs(landmarksTuples[44][1] - landmarksTuples[38][1])
     delta_x = abs(landmarksTuples[44][0] - landmarksTuples[38][0])
@@ -97,46 +104,26 @@ def faceAlignment(img, face):
     face_img = rotated[y_min_rotated:y_max_rotated, x_min_rotated:x_max_rotated]
     
     return face_img
-
+    
 def faceRepresentation(face_img):
-    return DeepFace.represent(face_img, detector_backend='retinaface', model_name='ArcFace')[0].get('embedding')
+    if face_img is None:
+        raise ValueError("Invalid image input - None. Please provide a valid image.")
+
+    try:
+        # DeepFace로 얼굴 표현을 가져오기
+        representation = DeepFace.represent(face_img, detector_backend='retinaface', model_name='ArcFace')
+        # 첫 번째 결과에서 임베딩 추출
+        return representation[0].get('embedding')
+    except Exception as e:
+        # 오류 발생 시 오류 메시지 출력
+        print(f"Error in faceRepresentation: {e}")
+        return None  # 또는 적절한 기본값 반환
 
 def verifyFace(face, verified):
-    threshold=0.4   # 임계값 0.4로 두고 테스트
+    threshold=0.45   # 임계값 0.4로 두고 테스트
     min_distance = float('inf')
-    best_match = None
     for embedding in verified:
         distance = cosine(face, embedding)
         if distance < min_distance:
             min_distance = distance
     return min_distance>threshold
-
-# 이미지 파일 경로 설정
-image_path = 'img3.jpg'
-image = cv2.imread(image_path)
-verifyFace_path = 'img.jpg'
-verifyFaceImg = cv2.imread(image_path)
-
-# 얼굴 검출
-faces = faceDetection(image)
-verified = []
-verified.append(faceRepresentation(faceAlignment(image,faceDetection(verifyFaceImg)[0])))
-flag = False
-
-for face in faces:
-    try:
-        rotated = faceAlignment(image, face)
-        embedding = faceRepresentation(rotated)
-        if(verifyFace(embedding, verified)==False):
-            print("블러처리 하지 않음")
-        else:
-            print("블러처리함")
-        cv2.imshow('Face', rotated)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-    except ValueError as e:
-        print("오류 발생:", e)
-        continue
-
-
