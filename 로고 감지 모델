@@ -1,0 +1,303 @@
+로고 감지 → 로고에 대한 경계 상자를 예측해야 함
+
+기존 오픈소스 로고 감지 모델 대부분은 브랜드를 인식하기 위한 목적으로 개발되어 브랜드 이름을 라벨로 사용함. 하지만 우리 서비스는 브랜드에 관계없이 로고 주변의 경계 상자만 식별하고 예측할 수 있으면 됨.
+
+적합한 사전 학습된 오픈소스 모델이 존재함
+
+[GitHub - LaotechLabs/LOGOS: A Brand Independent logo detection model](https://github.com/LaotechLabs/LOGOS)
+
+[설명](https://www.analyticsvidhya.com/blog/2022/08/logos-a-brand-independent-logo-detection-model/)
+
+# 💻과정
+
+해당 모델을 clone 함
+
+요구 사항
+
+```python
+Python 3.8
+pip install torch==1.10.0, torchvision==0.11.1, icevision==0.12.0
+pip install mmcv
+pip install mmcv-full
+pip install sahi==0.10.0
+pip install mmdet
+```
+
+inference 파일을 실행하려 함
+
+### 🤢에러 해결 과정
+
+    ➡️ ModuleNotFoundError: No module named ‘sahi.model’
+
+sahi 를 설치했음에도 sahi.model을 찾을 수 없다는 에러 발생
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/2a41884d-acfd-4066-981c-6de20fc666cb/image.png)
+
+→ sahi 예전 버전을 설치하는 것으로 해결
+
+➡️ ModuleNotFoundError: No module named ‘mmcv-runner’
+
+mmcv를 설치했음에도 mmcv-runner  모듈을 찾을 수 없다는 에러 발생
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/5f3e847c-107e-454c-be05-fd1cf6b21ed5/image.png)
+
+→ pip install mmcv-full 설치하는 것으로 해결
+
+➡️ ImportError: cannot import name 'print_log' from 'mmcv'
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/6f4d75aa-135d-416c-93ef-ec36b17e8ab9/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/6b4d411b-0b66-4729-86b1-4e941dae4184/image.png)
+
+     → C:\ProgramData\anaconda3\envs\logos_env\Lib\site-packages\mmcv\runner\base_module.py,
+
+c:\ProgramData\anaconda3\envs\logos_env\lib\site-packages\icevision\models\checkpoint.py에서 
+
+from mmcv 중 찾을 수 없는 모듈을 from mmengine로 바꿈
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/9e291eb9-ffa6-426c-b1d6-2305446b778d/7aa14550-bcd8-4633-91fa-2fa4f256605b.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/70767f0a-8f29-40a0-9022-89a0ec716314/image.png)
+
+→ 해결이 안돼서 .py 확장자로 실행했더니 다른 에러가 발생
+
+➡️ NameError: name 'dataclass' is not defined
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/7bd310ff-0b0f-4e97-9ef2-b23fbad0b143/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/54db1aaa-ea6f-49c7-b954-7498bb4061a3/image.png)
+
+→ icevision\core\task.py 에 from dataclasses import dataclass 를 추가함
+
+➡️ FileNotFoundError: C:/Users/SSAFY/Desktop/AI/LOGOS/utils/models/logo_model/logo-retinanet-checkpoint-52k_384_50.pth can not be found.
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/5ae4e15c-d329-4636-8fa1-e9a21a9a9b1e/image.png)
+
+→ 해당 파일 경로 올바르게 설정함으로써 해결
+
+➡️ AttributeError: module 'icevision.models' has no attribute 'mmdet’
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/dc2da82c-b82c-437d-a43f-9e1a07f7706c/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/62b915e6-a5d0-4685-ac14-95d288e6105c/image.png)
+
+내가 설치한 icevision 버전에 mmdet가 없기 때문에 에러 발생
+
+→ 체크포인트의 메타데이터에서 mmdet이 사용되는듯함
+
+pip install mmdet 설치하여 해결
+
+➡️ AssertionError: MMCV==1.7.2 is used but incompatible. Please install mmcv>=2.0.0rc4, <2.2.0.
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/f80c6187-cdd4-4042-9101-9e8a1e2d94b8/image.png)
+
+➡️ ImportError: cannot import name 'Config' from 'mmcv' (C:\ProgramData\anaconda3\envs\logos_env\lib\site-packages\mmcv\**init**.py)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/b0819699-4e8c-41b2-a7b5-96c26bf18367/image.png)
+
+→ mmcv의 일부 컴포넌트가 mmcv 2.0.0 이후로 삭제된 것으로 보임. mmcv를 mmengine으로 교체함으로써 해결
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/9b1290c0-c7f8-4754-8553-7cc2ed159aac/image.png)
+
+➡️ ImportError: cannot import name 'build_detector' from 'mmdet.models' (C:\ProgramData\anaconda3\envs\logos_env\lib\site-packages\mmdet\models\init.py)
+
+→ detectors 로 수정
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/3dec721c-00a0-4a29-b619-329693905d72/image.png)
+
+➡️ 다시 ImportError: cannot import name 'print_log' from 'mmcv’ ?????
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/0d44f195-b6a3-4f02-9224-cd3c1e69fb23/image.png)
+
+distributed.py 에서 mmcv→mmengine으로 바꿔줌으로써 해결
+
+➡️ ImportError: cannot import name 'TORCH_VERSION' from 'mmcv.utils’
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/081456c3-15c4-47d0-9ed1-142d06cd5152/image.png)
+
+→ 얘도 mmengine으로 바꿔봄 → 같은 에러 계속 발생 ???
+
+ [비슷한 문제를 겪고 있는 사람들 발견](https://github.com/open-mmlab/mmcv/issues/2984) → mmengine/utils.py 에 TORCH_VERSION 직접 추가해봄
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/d91a5bd6-3e6d-4a4f-93eb-b9b600f7aaef/image.png)
+
+→ 에러가 바뀜
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/ab2731b2-5f75-4683-9315-d4d3e86fa866/image.png)
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/c3e5cee5-6eb3-475b-89c6-bec8e87598ce/image.png)
+
+mmcv\parallel\distributed.py에서 TORCH_VERSION을 못잡는 것 같음
+
+from mmengine.utils.dl_utils import TORCH_VERSION 으로 수정해봄
+
+해결 !
+
+➡️ ImportError: cannot import name 'Registry' from 'mmcv.utils’
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/1bf710d9-a287-4d4a-a47f-e7b0ae12ff9d/image.png)
+
+[mmcv 2.1.0에서 'from mmcv.utils import Registry'를 'from mmenging.registry import Registry'로 변경함](https://github.com/open-mmlab/mmdetection/issues/7512)
+
+→ 수정하여 해결 
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/b9eda762-e0a6-4c1c-860a-62c83c054c79/image.png)
+
+➡️ ImportError: cannot import name 'is_list_of' from 'mmcv.utils’
+
+ImportError: cannot import name 'digit_version' from 'mmcv.utils’
+
+→ mmcv를 mmengine으로 수정하여 해결
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/777723cd-01f3-412a-8aa7-753269c86f9a/image.png)
+
+➡️ 기타 등등 오류나는 거 다 mmcv → mmengine으로 수정
+
+```python
+# from mmcv.utils import IS_NPU_AVAILABLE, TORCH_VERSION, digit_version
+from mmengine.utils.dl_utils import TORCH_VERSION
+from mmengine.utils import digit_version
+from mmengine.device import is_npu_available as IS_NPU_AVAILABLE
+
+#from mmcv.utils import Registry
+from mmengine.registry import Registry
+
+```
+
+➡️ ModuleNotFoundError: No module named 'torch_npu’
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/826e62e3-16b6-4cea-82c7-6d5c727723db/image.png)
+
+[torch-npu](https://pypi.org/project/torch-npu/)
+
+ㅠㅠ막혔다
+
+일단 파이썬 3.7 이하는 설치 파일이 없는데 LOGOS의 requirements 로 python==3.7 이 명시되어 있음..
+
+그리고 동작하는 os도 window 버전이 없음 → docker 이미지로 생성하든가 ubuntu에서 실행하든가 해야할듯..
+
+1. 우선 파이썬 3.8에서 동작하는지 확인
+    
+    python 3.8 가상 환경 새로 생성하고 필요한 패키지 설치함
+    
+    패키지 내용을 수정한 경우는 C:\ProgramData\anaconda3\envs\{가상환경 이름}\Lib\site-packages 에서 디렉토리 채로 복붙함
+    
+    [수정한 package.zip](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/c8c178e5-91c1-4378-b5f8-22fafc93f102/%EC%88%98%EC%A0%95%ED%95%9C_package.zip)
+    
+    → python 3.8 에서도 torch_npu No module error 뜸
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/253f3a02-8353-4bf1-8f36-8db3e2a082c7/image.png)
+    
+    파이썬 3.8 에서 그대로 동작할 수 있는 가능성 확인함
+    
+2. Ubuntu 에서 시도하기
+    
+    ```python
+    # 우선 anaconda 설치
+    sudo apt install curl -y
+    curl --output anaconda.sh https://repo.anaconda.com/archive/Anaconda3-2024.06-1-Linux-x86_64.sh
+    ```
+    
+    문제 발생 → 위에서 에러를 고치기 위해 pip install 한 패키지 자체를 수정했는데 requirements.txt 로는 이걸 그대로 리눅스 환경에 옮길 수 없음
+    
+    - 👀 **패키지 수정하고 다른 환경에서도 수정 사항 반영하기**
+        
+        **1. 패키지를 로컬로 수정하고 설치하기**
+        
+        수정한 패키지를 로컬에서 사용하고 싶다면, 해당 패키지를 직접 설치할 수 있습니다. 수정한 패키지가 있는 디렉토리에서 아래 명령어를 실행하면 됩니다:
+        
+        ```bash
+        pip install -e /path/to/your/local/package
+        ```
+        
+        이 방법은 `setup.py` 파일이 있는 패키지에 적용됩니다. 수정한 사항이 다른 환경에서도 즉시 반영됩니다.
+        
+        **2. 패키지를 패키징해서 배포하기**
+        
+        수정한 패키지를 `.tar.gz`나 `.whl` 파일로 패키징해서 배포할 수 있습니다. 다음과 같은 절차로 진행할 수 있습니다:
+        
+        1. 패키지를 수정한 후, 해당 디렉토리에서 아래 명령어를 실행하여 패키지를 만듭니다:
+            
+            ```bash
+            python setup.py sdist bdist_wheel
+            ```
+            
+        2. 생성된 파일을 `dist/` 폴더에서 찾을 수 있습니다.
+        3. 다른 환경에서 이 파일을 설치합니다:
+            
+            ```bash
+            pip install /path/to/your/package/dist/your_package_name-version.tar.gz
+            ```
+            
+        
+        **3. Git 리포지토리로 관리하기**
+        
+        수정한 패키지를 Git 리포지토리로 관리하면, 다른 환경에서도 쉽게 설치할 수 있습니다.
+        
+        1. 수정한 패키지를 Git 리포지토리에 푸시합니다.
+        2. 다른 환경에서는 다음과 같이 설치합니다:
+            
+            ```bash
+            pip install git+https://github.com/username/repo.git
+            ```
+            
+        
+        이 방법은 수정 사항을 버전 관리할 수 있어 유용합니다.
+        
+        **4. Docker를 이용하기**
+        
+        Docker를 사용하면 패키지와 그 환경을 컨테이너화할 수 있습니다. 이렇게 하면 동일한 환경을 다른 시스템에서도 쉽게 재현할 수 있습니다. Dockerfile을 작성하여 패키지를 설치하고 실행할 수 있습니다.
+        
+        👀 **시도** 
+        
+        가상환경 / Lib / site-packages 를 압축함
+        
+        [data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASbSURBVHgB7Z0tTytBFIYP914BDiQ4cIADB0EhwYFE8ifq7g/hJ2CRSCQ4kOCobF3ruHk3maS5aSnbdnfPOe/7JE0oCTvTnmc+dvbMsNbr9b5M0PLLBDUSgBwJQI4EIEcCkCMByJEA5EgAciQAORKAHAlAjgQgRwKQIwHIkQDkSAByJAA5EoAcCUCOBCBHApAjAciRAORIAHIkADkSgBwJQI4EIEcCkCMByJEA5EgAciQAOX+MhPX1dTs+Prbt7W3b3d21jY2N6ndgPB7bYDCw4XBor6+v9vHxUb1nIL0Ae3t7dn5+XgV9FhABYuC1v79f/Q4SPD8/28vLi2UmrQA/Cfx34O/wwjXu7u7S9gi/z87O/loyELTr62vb2tqyZcFQcXp6Wv2MXiEb6SaBCDwEWDVFqmykEgABOjo6sqbAtbNJkEaAi4uLRoNfQBmXl5eWhRQCIChlnG6Dk5OTVstrkvACYKLXxJg/D5RZ1hEiE14ABGIVs/26IPgZeoHQAiDwbYz7s4AA0XuB0AIsusizKsrycmRCC+Dhyz84OLDIhBUAra/rHgCgDpGHgbAC7OzsmBc81aUuYQXY3Nw0L3iqS13CCtDFrd8sPNWlLsoIIkcCkBNWAE8JGpGTRcIKgPw9L3iqS13CCvD5+Wle8FSXuoQVAJm8HlK0UAfUJSqhJ4Fvb2/WNcgcjkxoAfDld936oieKhhYAwX96erKuwJ6B6Oni4dcBIEAXvQAC//j4aNEJLwCC30UgUGaGzSIpVgLRC7Q5FKCsLFvG0iwFPzw8tBIUlIGyspDqWcD9/X2jEuDaKCMT6R4GIUBNzAlwzWzBByl3ByNYaK23t7dLP6vHfT6u9/7+bhlZ6/V6X5YYpI0jebRu/mD2wBfSHxCBngAv9ASQ4PDwsErhwvvJE0JGo1EV9H6/72KFsS1SCDAZyFngnh2vVUwSUV4WQUILULZnlR06aMGYqDW1QDN56khZho6+Ghh2DoBgXF1dTZ3koZWvcqWubECdtg0NZUQ+QiakAGjxOA9gHhABj4wXeWyMHgX5/j85Zwi9AXoeD4+n6xJOAASk7nbwkjyCGT0meXg/mcWDYOMsIJwShtaO3mWRHT/odaINCaHmAIsEHyCQOP6tHAHXFKVukSQIsxK4aPDbBnWMdG5ACAHwhUYIfgHzEwwjEXAvQFdHwCzLzc1NiC1jrgXA2I31/Ijbr1HnCEfKuRagq/N/VgXuJLzPB9wKgMBnOITJu8RuBUDXnwHvQ4FLAbDkGrnr/x8MBV7vClwKEHHWPw+vn8mdANlaf8FrL+BOgIytv+Dxs7kSAC0kY+sveOwFXAnQ5bGvbdH0A6m6uBLAw8GPTePtaFk3AmTv/gtYF/A0DLgRgKH1Fzx9VjcCIBuHBU89nRsBkKrFgqfNJm5SwpBGVc7fz/CvWKZRUsk9bS1PvzVMfI+OiiVHApAjAciRAORIAHIkADkSgBwJQI4EIEcCkCMByJEA5EgAciQAORKAHAlAjgQgRwKQIwHIkQDkSAByJAA5EoAcCUCOBCBHApAjAciRAORIAHIkADkSgBwJQI4EIOcfGjV2tEfztqEAAAAASUVORK5CYII=](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAASbSURBVHgB7Z0tTytBFIYP914BDiQ4cIADB0EhwYFE8ifq7g/hJ2CRSCQ4kOCobF3ruHk3maS5aSnbdnfPOe/7JE0oCTvTnmc+dvbMsNbr9b5M0PLLBDUSgBwJQI4EIEcCkCMByJEA5EgAciQAORKAHAlAjgQgRwKQIwHIkQDkSAByJAA5EoAcCUCOBCBHApAjAciRAORIAHIkADkSgBwJQI4EIEcCkCMByJEA5EgAciQAOX+MhPX1dTs+Prbt7W3b3d21jY2N6ndgPB7bYDCw4XBor6+v9vHxUb1nIL0Ae3t7dn5+XgV9FhABYuC1v79f/Q4SPD8/28vLi2UmrQA/Cfx34O/wwjXu7u7S9gi/z87O/loyELTr62vb2tqyZcFQcXp6Wv2MXiEb6SaBCDwEWDVFqmykEgABOjo6sqbAtbNJkEaAi4uLRoNfQBmXl5eWhRQCIChlnG6Dk5OTVstrkvACYKLXxJg/D5RZ1hEiE14ABGIVs/26IPgZeoHQAiDwbYz7s4AA0XuB0AIsusizKsrycmRCC+Dhyz84OLDIhBUAra/rHgCgDpGHgbAC7OzsmBc81aUuYQXY3Nw0L3iqS13CCtDFrd8sPNWlLsoIIkcCkBNWAE8JGpGTRcIKgPw9L3iqS13CCvD5+Wle8FSXuoQVAJm8HlK0UAfUJSqhJ4Fvb2/WNcgcjkxoAfDld936oieKhhYAwX96erKuwJ6B6Oni4dcBIEAXvQAC//j4aNEJLwCC30UgUGaGzSIpVgLRC7Q5FKCsLFvG0iwFPzw8tBIUlIGyspDqWcD9/X2jEuDaKCMT6R4GIUBNzAlwzWzBByl3ByNYaK23t7dLP6vHfT6u9/7+bhlZ6/V6X5YYpI0jebRu/mD2wBfSHxCBngAv9ASQ4PDwsErhwvvJE0JGo1EV9H6/72KFsS1SCDAZyFngnh2vVUwSUV4WQUILULZnlR06aMGYqDW1QDN56khZho6+Ghh2DoBgXF1dTZ3koZWvcqWubECdtg0NZUQ+QiakAGjxOA9gHhABj4wXeWyMHgX5/j85Zwi9AXoeD4+n6xJOAASk7nbwkjyCGT0meXg/mcWDYOMsIJwShtaO3mWRHT/odaINCaHmAIsEHyCQOP6tHAHXFKVukSQIsxK4aPDbBnWMdG5ACAHwhUYIfgHzEwwjEXAvQFdHwCzLzc1NiC1jrgXA2I31/Ijbr1HnCEfKuRagq/N/VgXuJLzPB9wKgMBnOITJu8RuBUDXnwHvQ4FLAbDkGrnr/x8MBV7vClwKEHHWPw+vn8mdANlaf8FrL+BOgIytv+Dxs7kSAC0kY+sveOwFXAnQ5bGvbdH0A6m6uBLAw8GPTePtaFk3AmTv/gtYF/A0DLgRgKH1Fzx9VjcCIBuHBU89nRsBkKrFgqfNJm5SwpBGVc7fz/CvWKZRUsk9bS1PvzVMfI+OiiVHApAjAciRAORIAHIkADkSgBwJQI4EIEcCkCMByJEA5EgAciQAORKAHAlAjgQgRwKQIwHIkQDkSAByJAA5EoAcCUCOBCBHApAjAciRAORIAHIkADkSgBwJQI4EIOcfGjV2tEfztqEAAAAASUVORK5CYII=)
+        
+        ```bash
+        tar -czvf site-packages.tar.gz site-packages
+        ```
+        
+        wsl-ubuntu에서 pip install
+        
+        안되네 포기
+        
+    1. 
+1. wsl-ubuntu에 가상 환경 만들고 cuda-11.3 설치  [링크](https://developer.nvidia.com/cuda-11.3.0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=WSL-Ubuntu&target_version=2.0&target_type=deb_local)
+2. LOGOS repo에서 주어진 icevision 설치 sh 파일로 설치 시도
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/543bad87-d0ba-4729-99e8-c1957caae415/image.png)
+    
+    버전 호환성 문제 발생
+    
+    → 파이썬 3.8 가상 환경 만들고 다시 시도 ! (원래는 3.9) → 성공 !
+    
+3. ModuleNotFoundError: No module named 'sahi.model’
+    
+    window 환경에서 접했던 문제. 이전 버전 sahi 깔아야 함
+    
+    ```bash
+    pip install sahi==0.10.0
+    ```
+    
+4. 드디어 모델 불러오는 데는 성공 🫠
+5. 이미지 읽어서 상표 인식-경계 상자 찍어보기 시도
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/6819b781-6162-4e28-8255-120cd3308da8/image.png)
+    
+    `numpy`에서 `np.int`를 사용할 수 없다는 경고가 발생
+    
+    `numpy` 1.20부터 `np.int`가 더 이상 사용되지 않음. 대신 `int`를 사용해야 함
+    → 수정
+    
+6. 결과
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/4dd1128b-87c3-4e0d-92e3-5a5231af4806/image.png)
+
+1. 모델 서빙을 위해 변환하기 [참고](https://blog.taehun.dev/deploy-deep-learning-model)
+    
+    배포하기 위해 모델 체크포인트 파일을 서빙용 모델로 변환
+    
+    개방형 표준 형식 ONNX로 변환하려 함
+    
+    코드 수정
