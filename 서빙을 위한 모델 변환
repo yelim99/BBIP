@@ -1,0 +1,39 @@
+1. 모델 서빙을 위해 변환하기 [참고](https://blog.taehun.dev/deploy-deep-learning-model)
+    
+    배포하기 위해 모델 체크포인트 파일을 서빙용 모델로 변환
+    
+    개방형 표준 형식 ONNX로 변환하려 함
+    
+    코드 수정
+    
+    - [Pytorch의 nn.Module 이해하기](https://seungseop.tistory.com/7)
+        
+        torch.nn.Module을 상속받아 모델을 만듬
+        
+        __init__()과 forward() 를 override
+        
+        backward()를 이용하면 backward 계산은 알아서 해줌
+        
+    
+    fowrard() 메서드를 오버라이드 해서 그림만 있는 로고를 검출하는 model_1과 텍스트까지 있는 로고를 검출하는 model_2의 검출 결과 경계 상자 리스트를 단순히 합쳐서 반환하게 함
+    
+    추후 NMS(Non-Maximum Suppression) 기법 적용을 고려
+    
+    forward() 메서드를 오버라이드 하는 과정에서 img_metas가 잘못 정의되고 있다는 오류가 자꾸 발생함
+    
+    mmdet의 구조를 살펴보면 img_metas의 의미를 알 수 있음 [링크](https://github.com/open-mmlab/mmdetection/issues/199)
+    
+    img_metas (list[dict]): List of image info dict where each dict
+    has: 'img_shape', 'scale_factor', 'flip', and may also contain
+    'filename', 'ori_shape', 'pad_shape', and 'img_norm_cfg'.
+    For details on the values of these keys, see
+    :class:`mmdet.datasets.pipelines.Collect`.
+    kwargs (keyword arguments): Specific to concrete implementation.
+    
+    onnx 로 변환 시 input이 비어있는 문제 발생
+    
+    ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/7fe115f3-80b8-46b2-aa6d-3c5e5666075b/3e58f209-6b0e-4c8d-978f-b10f74ba54d2/image.png)
+    
+    → onnx.export 할 때 input_names 인자에 지정한 이름이 모델의 forward 메서드에서 지정한 이름과 일치해야 함 !!
+    
+    모델의 forward() 메서드에서 입력을 반드시 tensor로 받도록 정의했음. 하지만 ONNX로 변환한 후에는 원래의 PyTorch 모델에서의 forward 메서드 정의가 적용되지 않음@! 이때는 입력 형식이 numpy 배열이어야 함 !!
