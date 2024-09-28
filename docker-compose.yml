@@ -1,0 +1,31 @@
+version: '3'
+services:
+  backend:
+    container_name: bbip
+    build:
+      context: ./be  # 백엔드 빌드 컨텍스트
+      dockerfile: Dockerfile  # 백엔드 Dockerfile
+      network: host
+    ports:
+      - "8080:8080"  # 이 부분은 host 모드에서는 생략 가능
+    depends_on:
+      - mysql
+      - redis
+    network_mode: "host"  # Host 네트워크 모드 사용
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"  # 이 부분은 host 모드에서는 생략 가능
+    network_mode: "host"
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"  # 이 부분은 host 모드에서는 생략 가능
+    volumes:
+      - mysql-data:/var/lib/mysql  # MySQL 데이터 영구 저장을 위한 볼륨
+    network_mode: "host"
+
+volumes:
+  mysql-data:
