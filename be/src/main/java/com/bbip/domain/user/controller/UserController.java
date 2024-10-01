@@ -3,6 +3,7 @@ package com.bbip.domain.user.controller;
 import com.bbip.domain.user.dto.UserDto;
 import com.bbip.domain.user.service.UserServiceImpl;
 import com.bbip.global.response.CommonResponse;
+import com.bbip.global.response.ListResponse;
 import com.bbip.global.response.SingleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;

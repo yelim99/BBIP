@@ -11,6 +11,20 @@ import org.springframework.stereotype.Controller;
 @Slf4j
 public class SignalController {
 
+    //client to ai
+   @MessageMapping("client/ai/{key}")
+   @SendTo("sub/ai/client/{key}")
+   public String clientToAi(@DestinationVariable String key, @Payload String message) {
+       return message;
+   }
+
+    //client to encoder
+    //ai to encoder
+
+    //ai to client
+    //encoder to client
+    //encoder to ai
+
     @MessageMapping("/cam/{key}")
     @SendTo("/sub/client/{key}")
     public String camToClient(@DestinationVariable("key") String key, @Payload String message) {
