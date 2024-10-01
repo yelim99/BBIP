@@ -19,6 +19,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(rtmpController, "/ws/rtmps").setAllowedOrigins("*");
-        registry.addHandler(generalWebSocketHandler, "/ws").setAllowedOrigins("*");
+        registry.addHandler(generalWebSocketHandler, "/ws-general").setAllowedOrigins("*");
     }
 }
