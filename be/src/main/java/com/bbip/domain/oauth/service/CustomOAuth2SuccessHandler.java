@@ -29,13 +29,17 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String refreshToken = (String) request.getAttribute("refreshToken");
         log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
 
-        //header로 전달
-        response.addHeader("accessToken", accessToken);
-        response.addHeader("refreshToken", refreshToken);
+        // 토큰을 포함하여 Flutter로 리디렉션할 URL 생성
+        String redirectUrl = "bbip://callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
 
-        log.info("response: {}", response.getHeader("accessToken"));
-        log.info("response: {}", response.getHeader("refreshToken"));
+        response.sendRedirect(redirectUrl);
 
+//        //header로 전달
+//        response.addHeader("accessToken", accessToken);
+//        response.addHeader("refreshToken", refreshToken);
+//
+//        log.info("response: {}", response.getHeader("accessToken"));
+//        log.info("response: {}", response.getHeader("refreshToken"));
 
 
     }

@@ -15,6 +15,4 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class OauthController {
-
-
 }
