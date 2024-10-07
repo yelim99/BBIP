@@ -34,7 +34,8 @@ public class FaceController {
             @RequestPart("face") FaceDto face,
             @RequestPart("image") MultipartFile image) throws IOException
     {
-        FaceDto savedFace = faceService.addFace(accessToken, face, image);
+        String token = accessToken.substring(7);
+        FaceDto savedFace = faceService.addFace(token, face, image);
 
         return SingleResponse.<FaceDto>builder().message("얼굴 등록 완료").data(savedFace).build();
     }

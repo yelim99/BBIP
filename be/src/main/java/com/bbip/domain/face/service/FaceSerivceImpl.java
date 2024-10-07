@@ -32,9 +32,8 @@ public class FaceSerivceImpl implements FaceService {
         log.info("addFace호출");
         log.info("accessToken {}", accessToken);
         // JWT토큰에서 사용자 id 추출
-        String token = accessToken.startsWith("Bearer ") ? accessToken.substring(7) : accessToken;
 
-        int userId = jwtUtil.getUserIdFromJWT(token);
+        int userId = jwtUtil.getUserIdFromJWT(accessToken);
 
         face.setUserId(userId);
         String fileName = UUID.randomUUID().toString() + image.getOriginalFilename();
