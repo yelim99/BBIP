@@ -20,8 +20,8 @@ services:
       dockerfile: Dockerfile
       network: host
     ports:
-      -"8000:8000"
-  network_mode: "host"
+      - "8000:8000"
+    network_mode: "host"
   
   redis:
     image: redis:latest
