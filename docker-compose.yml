@@ -12,7 +12,17 @@ services:
       - mysql
       - redis
     network_mode: "host"  # Host 네트워크 모드 사용
-
+  
+  fast:
+    container_name: fast
+    build: 
+      context: ./fast
+      dockerfile: Dockerfile
+      network: host
+    ports:
+      -"8000:8000"
+  network_mode: "host"
+  
   redis:
     image: redis:latest
     ports:
