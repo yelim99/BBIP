@@ -29,6 +29,8 @@ public class FaceSerivceImpl implements FaceService {
 
     @Override
     public FaceDto addFace(String accessToken, FaceDto face, MultipartFile image) {
+        log.info("addFace호출");
+        log.info("accessToken {}", accessToken);
         // JWT토큰에서 사용자 id 추출
         String token = accessToken.startsWith("Bearer ") ? accessToken.substring(7) : accessToken;
 

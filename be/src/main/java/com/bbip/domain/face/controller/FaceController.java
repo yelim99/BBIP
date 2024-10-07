@@ -5,6 +5,7 @@ import com.bbip.domain.face.service.FaceService;
 import com.bbip.global.response.CommonResponse;
 import com.bbip.global.response.ListResponse;
 import com.bbip.global.response.SingleResponse;
+import com.bbip.global.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.List;
 public class FaceController {
 
     private final FaceService faceService;
+    private final JwtUtil jwtUtil;
 
     @Operation(
             summary = "얼굴 등록",
