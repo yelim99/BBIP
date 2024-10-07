@@ -17,6 +17,7 @@ public class FaceDto {
     private Integer userId;
     private String fileUrl;
     private String fileName;
+    private byte[] faceEmbedding;
     private Boolean self;
 
     FaceDto (Boolean self) {
@@ -30,6 +31,7 @@ public class FaceDto {
                 .fileUrl(fileUrl)
                 .fileName(fileName)
                 .self(self)
+                .faceEmbedding(faceEmbedding)
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import com.bbip.domain.face.entity.FaceEntity;
 import com.bbip.domain.face.repository.FaceRepository;
 import com.bbip.domain.user.entity.UserEntity;
 import com.bbip.domain.user.repository.UserRepository;
+import com.bbip.global.util.FaceUtil;
 import com.bbip.global.util.JwtUtil;
 import com.bbip.global.util.S3FileUploadUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class FaceSerivceImpl implements FaceService {
     private final UserRepository userRepository;
     private final S3FileUploadUtil fileUploadUtil;
     private final JwtUtil jwtUtil;
+    private final FaceUtil faceUtil;
 
     @Override
     public FaceDto addFace(String accessToken, FaceDto face, MultipartFile image) {
@@ -35,7 +37,8 @@ public class FaceSerivceImpl implements FaceService {
         face.setFileName(fileName);
         String fileUrl = fileUploadUtil.uploadFile(image, fileName);
         face.setFileUrl(fileUrl);
-
+        byte[] faceembedding = faceUtil.getFaceEmbeddingFromFastAPI(fileUrl);
+        face.setFaceEmbedding(faceembedding);
         UserEntity userEntity = userRepository.findById(userId);
         FaceEntity faceEntity = faceRepository.save(face.toEntity(userEntity));
         log.info("얼굴 등록 완료");

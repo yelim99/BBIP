@@ -29,6 +29,9 @@ public class FaceEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
+    @Column(name = "face_embedding", nullable = false)
+    private byte[] faceEmbedding;
+
     @Column(nullable = false)
     private Boolean self;
 
@@ -38,6 +41,7 @@ public class FaceEntity {
                 .userId(userEntity.getId())
                 .fileUrl(fileUrl)
                 .fileName(fileName)
+                .faceEmbedding(faceEmbedding)
                 .self(self)
                 .build();
     }

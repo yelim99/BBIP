@@ -26,7 +26,7 @@ public class FaceController {
             summary = "얼굴 등록",
             description = "객체속성은 \"selt\"만 설정 필요. 본인인지(true) 아닌지(false)"
     )
-    @PostMapping(value = "", consumes = "multipart/form-data")
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public SingleResponse<FaceDto> saveFace(
             @RequestAttribute(value = "AccessToken", required = true) String accessToken,
             @RequestPart("face") FaceDto face,
