@@ -17,7 +17,7 @@ public class FaceUtil {
     // FastAPI에 S3 URL을 보내고 BLOB(바이너리) 데이터를 받아오는 메서드
     public byte[] getFaceEmbeddingFromFastAPI(String imageUrl) {
         return this.webClient.post()
-                .uri("/process-image")
+                .uri("/fast/process-image")
                 .bodyValue(new ImageRequest(imageUrl))
                 .retrieve()
                 .bodyToMono(byte[].class)

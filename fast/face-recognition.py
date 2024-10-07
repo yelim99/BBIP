@@ -35,7 +35,7 @@ def get_face_embedding(model, face_pixels):
 class ImageRequest(BaseModel):
     image_url: str
 
-@app.post("/process-image")
+@app.post("/fast/process-image")
 async def process_image(request: ImageRequest):
     try:
         image_url = request.image_url
