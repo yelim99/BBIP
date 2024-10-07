@@ -28,7 +28,7 @@ public class FaceController {
     )
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public SingleResponse<FaceDto> saveFace(
-            @RequestAttribute(value = "AccessToken", required = true) String accessToken,
+            @RequestHeader(value = "Authorization", required = true) String accessToken,
             @RequestPart("face") FaceDto face,
             @RequestPart("image") MultipartFile image) throws IOException
     {
