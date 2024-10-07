@@ -4,19 +4,23 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Base64;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JwtUtil {
 
-    private final String JWT_SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
+    private final String SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
     private final long JWT_EXPIRATION = 3600000;  // Access Token 유효 기간, 단위:ms (1시간)
     private final long REFRESH_TOKEN_EXPIRATION = 86400;  // Refresh Token 유효 기간, 단위:s (1일)
 
+    private final String JWT_SECRET = Base64.getEncoder().encodeToString(SECRET.getBytes());
     private static final String HEADER_STRING = "Authorization";
     private static final String TOKEN_PREFIX = "Bearer ";
 
@@ -25,13 +29,22 @@ public class JwtUtil {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION);
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(username)
                 .claim("userId", userId)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
                 .compact();
+
+        String[] tokenParts = token.split("\\.");
+        String header = new String(Base64.getUrlDecoder().decode(tokenParts[0]));
+        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]));
+
+        log.info("header: {}, payload: {}", header, payload);
+
+
+        return token;
     }
 
     // Refresh Token 생성
