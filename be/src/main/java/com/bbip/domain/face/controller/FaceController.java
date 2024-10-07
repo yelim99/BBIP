@@ -34,6 +34,7 @@ public class FaceController {
             @RequestPart("face") FaceDto face,
             @RequestPart("image") MultipartFile image) throws IOException
     {
+        log.info("accessToken: {}, face: {}", accessToken, face);
         String token = accessToken.substring(7);
         FaceDto savedFace = faceService.addFace(token, face, image);
 
