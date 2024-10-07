@@ -30,7 +30,9 @@ public class FaceSerivceImpl implements FaceService {
     @Override
     public FaceDto addFace(String accessToken, FaceDto face, MultipartFile image) {
         // JWT토큰에서 사용자 id 추출
-        int userId = jwtUtil.getUserIdFromJWT(accessToken);
+        String token = accessToken.startsWith("Bearer ") ? accessToken.substring(7) : accessToken;
+
+        int userId = jwtUtil.getUserIdFromJWT(token);
 
         face.setUserId(userId);
         String fileName = UUID.randomUUID().toString() + image.getOriginalFilename();
