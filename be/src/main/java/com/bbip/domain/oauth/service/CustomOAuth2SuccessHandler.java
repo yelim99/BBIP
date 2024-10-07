@@ -30,7 +30,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
 
         // 토큰을 포함하여 Flutter로 리디렉션할 URL 생성
-        String redirectUrl = "bbip://callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken;
+        String redirectUrl = "bbip://callback?accessToken=" + accessToken + "&  refreshToken=" + refreshToken;
 
         response.sendRedirect(redirectUrl);
 

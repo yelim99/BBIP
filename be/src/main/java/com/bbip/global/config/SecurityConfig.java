@@ -29,10 +29,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/oauth2/**", "/login/oauth2/code/**", "/public/**","/ws/**","/ws-genaral/**","/fast").permitAll()
+                        .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
-                        .loginPage("/login")
                         .successHandler(customOAuth2SuccessHandler))  // 성공 핸들러 설정
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login"));
