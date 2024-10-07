@@ -13,7 +13,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final String JWT_SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
+    private final String JWT_SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
     private final long JWT_EXPIRATION = 3600000;  // Access Token 유효 기간, 단위:ms (1시간)
     private final long REFRESH_TOKEN_EXPIRATION = 86400;  // Refresh Token 유효 기간, 단위:s (1일)
 
