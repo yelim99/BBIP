@@ -41,7 +41,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         UserDto user = userService.saveOrUpdateOAuthUser(email, name, oauthProvider);
 
         // JWT 및 Refresh Token 발급
-        String accessToken = "Bearer " + tokenService.generateAccessToken(email, user.getId());
+        String accessToken = tokenService.generateAccessToken(email, user.getId());
         String refreshToken = tokenService.generateRefreshToken(email);
 
         // Redis에 Refresh Token 저장
