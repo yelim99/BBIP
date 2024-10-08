@@ -10,6 +10,8 @@ import com.bbip.domain.rtmp.repository.RtmpServerRepository;
 import com.bbip.domain.rtmp.repository.StreamKeyRepository;
 import com.bbip.domain.user.entity.UserEntity;
 import com.bbip.domain.user.repository.UserRepository;
+import com.bbip.global.exception.NoSelectedRtmpServerException;
+import com.bbip.global.exception.RtmpServerNotFoundException;
 import com.bbip.global.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,30 +28,29 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RtmpServiceImpl implements RtmpService {
 
-    private static final String PREFIX = "[f=flv]";
+//    private static final String PREFIX = "[f=flv]";
     private final StreamKeyRepository streamKeyRepository;
     private final UserRepository userRepository;
     private final RtmpServerRepository serverRepository;
     private final JwtUtil jwtUtil;
 
     @Override
-    public String getRtmpUrls(String accessToken) {
+    public List<String> getRtmpUrls(String accessToken) {
 
         // JWT토큰에서 사용자 id 추출
         int userId = jwtUtil.getUserIdFromJWT(accessToken);
         List<RtmpResult> rtmpResults = streamKeyRepository.findStreamRtmpUrl(userId);
+        if (rtmpResults.isEmpty()) {
+            throw new NoSelectedRtmpServerException("송출하도록 설정된 서버가 한 개 이상 있어야 합니다.");
+        }
 
-        StringBuilder result = new StringBuilder();
-        for (Iterator<RtmpResult> i = rtmpResults.iterator(); i.hasNext();) {
-            RtmpResult rtmp = i.next();
-            result.append(PREFIX)
-                    .append(rtmp.getServerUri().toString())
-                    .append(rtmp.getKey().toString());
-            if (i.hasNext()) result.append("|");
+        List<String> result = new ArrayList<>();
+        for (RtmpResult rtmpResult : rtmpResults) {
+            result.add(rtmpResult.getServerUri() + rtmpResult.getKey());
         }
 
         log.info("송출 대상 url 목록 조회 : {}", result.toString());
-        return result.toString();
+        return result;
     }
 
     @Override
@@ -61,6 +62,8 @@ public class RtmpServiceImpl implements RtmpService {
 
         UserEntity userEntity = userRepository.findById(userId);
         Optional<RtmpServerEntity> rtmpServerEntity = serverRepository.findById(streamKeyDto.getServerId());
+
+        // 유저-rtmp서버의 복합키 생성
         StreamKeyIdEntity streamKeyId = StreamKeyIdEntity.builder()
                                             .userId(userId)
                                             .serverId(streamKeyDto.getServerId()).build();
@@ -90,6 +93,9 @@ public class RtmpServiceImpl implements RtmpService {
         int userId = jwtUtil.getUserIdFromJWT(accessToken);
 
         List<RtmpResult> rtmpResults = streamKeyRepository.findAllRtmpUrl(userId);
+        if (rtmpResults.isEmpty()) {
+            throw new RtmpServerNotFoundException("해당 유저의 송출 가능한 스트리밍 서버 없음. 스트림키 등록 필요");
+        }
         List<StreamKeyDto> DtoResult = new ArrayList<>();
         for (RtmpResult rtmpResult : rtmpResults) {
             DtoResult.add(StreamKeyDto.builder()
@@ -107,6 +113,10 @@ public class RtmpServiceImpl implements RtmpService {
         int userId = jwtUtil.getUserIdFromJWT(accessToken);
 
         List<RtmpResult> rtmpResults = streamKeyRepository.findAllRtmpUrl(userId);
+        if (rtmpResults.isEmpty()) {
+            throw new RtmpServerNotFoundException("해당 유저의 송출가능한 스트리밍 서버 없음. 스트림키 등록 필요");
+        }
+
         List<StreamKeyDto> DtoResult = new ArrayList<>();
         for (RtmpResult rtmpResult : rtmpResults) {
             if (streamList.getServers().contains(rtmpResult.getServerId())) {

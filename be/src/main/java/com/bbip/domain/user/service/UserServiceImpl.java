@@ -3,6 +3,7 @@ package com.bbip.domain.user.service;
 import com.bbip.domain.user.dto.UserDto;
 import com.bbip.domain.user.entity.UserEntity;
 import com.bbip.domain.user.repository.UserRepository;
+import com.bbip.global.exception.NotSameUserException;
 import com.bbip.global.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,9 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(String accessToken, UserDto user) {
         // JWT토큰에서 사용자 id 추출
         int userId = jwtUtil.getUserIdFromJWT(accessToken);
-        user.setId(userId);
+        if (userId != user.getId()) {
+            throw new NotSameUserException("접근한 유저와 수정하려는 유저의 정보가 다릅니다.");
+        }
         UserEntity userEntity = userRepository.save(user.toEntity());
         log.info("유저 정보 수정: {}", userEntity);
 

@@ -1,7 +1,5 @@
 package com.bbip.global.util;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -11,7 +9,7 @@ public class FaceUtil {
     private final WebClient webClient;
 
     public FaceUtil(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8000/process-image").build();
+        this.webClient = webClientBuilder.baseUrl("http://localhost:8000").build();
     }
 
     // FastAPI에 S3 URL을 보내고 BLOB(바이너리) 데이터를 받아오는 메서드

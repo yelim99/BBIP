@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <script>
+        window.onload = function() {
+            // 서버에서 응답받은 토큰을 localStorage에 저장
+            const params = new URLSearchParams(window.location.search);
+            const accessToken = params.get("accessToken");
+            const refreshToken = params.get("refreshToken");
+
+            if (accessToken && refreshToken) {
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", refreshToken);
+            }
+
+            // localStorage에서 토큰을 가져와 화면에 표시
+            const storedAccessToken = localStorage.getItem("accessToken");
+            const storedRefreshToken = localStorage.getItem("refreshToken");
+
+            if (storedAccessToken && storedRefreshToken) {
+                document.getElementById("accessToken").innerText = storedAccessToken;
+                document.getElementById("refreshToken").innerText = storedRefreshToken;
+            } else {
+                document.getElementById("tokens").innerText = "토큰이 없습니다.";
+            }
+        }
+    </script>
+</head>
+<body>
+<h1>Welcome to Home Page</h1>
+<div id="tokens">
+    <p>Access Token: <span id="accessToken"></span></p>
+    <p>Refresh Token: <span id="refreshToken"></span></p>
+</div>
+</body>
+</html>

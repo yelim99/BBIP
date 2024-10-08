@@ -27,13 +27,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = jwtUtil.getJwtFromRequest(request);
 
         if (token != null && jwtUtil.validateToken(token)) {
-            String username = jwtUtil.getUsernameFromJWT(token);
-            log.info("username: {}", username);
+            String userEmail = jwtUtil.getEmailFromJWT(token);
+            log.info("userEmail: {}", userEmail);
             // 인증 객체 생성 후 SecurityContext에 저장
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userEmail, null, new ArrayList<>());
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
+        } else log.info("헤더에 토큰이 없어요");
 
-        filterChain.doFilter(request, response);
+        try{
+            log.info("doFilter");
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            log.error("JWT 필터에서 예외 발생", e);
+        }
     }
 }

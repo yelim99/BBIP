@@ -6,7 +6,7 @@ import com.bbip.domain.rtmp.Dto.StreamListDto;
 import java.util.List;
 
 public interface RtmpService {
-    String getRtmpUrls(String accessToken);
+    List<String> getRtmpUrls(String accessToken);
 
     StreamKeyDto updateStreamkey(String accessToken, StreamKeyDto rtmpDto);
 

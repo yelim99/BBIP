@@ -1,5 +1,6 @@
 package com.bbip.global.util;
 
+import com.bbip.global.exception.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -36,8 +37,8 @@ public class RedisUtil {
         return redisTemplate.opsForValue().get(key);
     }
 
-    public void removeData(String key) {
-        redisTemplate.delete(key);
+    public boolean removeData(String key) {
+        return redisTemplate.delete(key);
     }
 
     public Set<String> getDataKeys(String key) {

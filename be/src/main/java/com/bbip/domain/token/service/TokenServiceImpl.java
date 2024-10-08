@@ -1,12 +1,15 @@
 package com.bbip.domain.token.service;
 
+import com.bbip.global.exception.InvalidTokenException;
 import com.bbip.global.util.JwtUtil;
 import com.bbip.global.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TokenServiceImpl implements TokenService {
 
     private final JwtUtil jwtUtil;
@@ -14,40 +17,41 @@ public class TokenServiceImpl implements TokenService {
 
     /**
      * Access Token 발급
-     * @param username
+     * @param email
      * @param userId
      * @return
      */
     @Override
-    public String generateAccessToken(String username, Integer userId) {
-        return jwtUtil.generateToken(username, userId);
+    public String generateAccessToken(String email, Integer userId) {
+        return jwtUtil.generateToken(email, userId);
     }
 
     /**
      * Refresh Token 발급
-     * @param username
+     * @param email
      * @return
      */
     @Override
-    public String generateRefreshToken(String username) {
-        String refreshToken = jwtUtil.generateRefreshToken(username);
+    public String generateRefreshToken(String email) {
+        String refreshToken = jwtUtil.generateRefreshToken(email);
         long refreshTokenExpirationTime = jwtUtil.getRefreshTokenExpirationTime();
 
         // Redis에 Refresh Token 저장
-        redisUtil.setDataExpire(username, refreshToken, refreshTokenExpirationTime);
+        redisUtil.setDataExpire(email, refreshToken, refreshTokenExpirationTime);
         return refreshToken;
     }
 
     /**
      * Redis에서 Refresh Token 검증
-     * @param username
+     * @param email
      * @param refreshToken
      * @return
      */
     @Override
-    public boolean validateRefreshToken(String username, String refreshToken) {
-        String storedToken = redisUtil.getData(username);
-        return storedToken != null && storedToken.equals(refreshToken);
+    public void validateRefreshToken(String email, String refreshToken) {
+        String storedToken = redisUtil.getData(email);
+        if (storedToken == null || !storedToken.equals(refreshToken))
+            throw new InvalidTokenException("[엑세스토큰 발급 실패]일치하는 리프레시 토큰이 없음");
     }
 
     /**
@@ -56,6 +60,7 @@ public class TokenServiceImpl implements TokenService {
      */
     @Override
     public void removeRefreshToken(String username) {
-        redisUtil.removeData(username);
+        if(redisUtil.removeData(username)) return;
+        throw new InvalidTokenException("[로그아웃 실패]해당하는 토큰이 없음");
     }
 }

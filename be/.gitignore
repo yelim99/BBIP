@@ -83,10 +83,10 @@ node_modules/
 
 ### 기타 ###
 HELP.md
-#.gradle
-#build/
-#!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/x
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
 !**/src/test/**/build/
 
 ### application.properties ###

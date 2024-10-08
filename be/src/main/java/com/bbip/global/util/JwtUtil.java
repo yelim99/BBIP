@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -12,11 +11,10 @@ import org.springframework.util.StringUtils;
 import java.util.Base64;
 import java.util.Date;
 
-@Slf4j
 @Component
 public class JwtUtil {
 
-    private final String SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
+    private final String SECRET = "bbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbipbbip";
     private final long JWT_EXPIRATION = 3600000;  // Access Token 유효 기간, 단위:ms (1시간)
     private final long REFRESH_TOKEN_EXPIRATION = 86400;  // Refresh Token 유효 기간, 단위:s (1일)
 
@@ -25,35 +23,26 @@ public class JwtUtil {
     private static final String TOKEN_PREFIX = "Bearer ";
 
     // Access Token 생성
-    public String generateToken(String username, Integer userId) {
+    public String generateToken(String email, Integer userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION);
 
-        String token = Jwts.builder()
-                .setSubject(username)
+        return TOKEN_PREFIX + Jwts.builder()
+                .setSubject(email)
                 .claim("userId", userId)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
                 .compact();
-
-        String[] tokenParts = token.split("\\.");
-        String header = new String(Base64.getUrlDecoder().decode(tokenParts[0]));
-        String payload = new String(Base64.getUrlDecoder().decode(tokenParts[1]));
-
-        log.info("header: {}, payload: {}", header, payload);
-
-
-        return token;
     }
 
     // Refresh Token 생성
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String email) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + REFRESH_TOKEN_EXPIRATION*1000);
 
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
@@ -66,20 +55,20 @@ public class JwtUtil {
     }
 
     // JWT 토큰에서 사용자 이름 추출
-    public String getUsernameFromJWT(String token) {
+    public String getEmailFromJWT(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(JWT_SECRET)
-                .parseClaimsJws(token.substring(7))
+                .parseClaimsJws(resolveToken(token))
                 .getBody();
 
         return claims.getSubject();
     }
 
     // JWT 토큰에서 사용자 아이디 추출
-    public Integer getUserIdFromJWT(String token) {
+    public Integer getUserIdFromJWT(String tokenWithBearer) {
         Claims claims = Jwts.parser()
                 .setSigningKey(JWT_SECRET)
-                .parseClaimsJws(token)
+                .parseClaimsJws(resolveToken(tokenWithBearer))
                 .getBody();
 
         return claims.get("userId", Integer.class);
@@ -102,5 +91,12 @@ public class JwtUtil {
             return bearerToken.substring(7);  // "Bearer " 이후의 토큰 부분만 추출
         }
         return null;
+    }
+
+    public String resolveToken(String token) {
+        if (token != null && token.startsWith(TOKEN_PREFIX)) {
+            return token.substring(7); // "Bearer " 제거
+        }
+        return token;
     }
 }

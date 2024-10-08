@@ -1,7 +1,10 @@
 package com.bbip.domain.token.controller;
 import com.bbip.domain.token.service.TokenServiceImpl;
+import com.bbip.global.exception.InvalidParamException;
+import com.bbip.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,18 +30,22 @@ public class TokenController {
             description = "userId, userName, refreshToken 입력 필요"
     )
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
+    public CommonResponse refreshAccessToken(@RequestBody Map<String, String> request) {
+
+        if (request.get("userId") == null || request.get("email") == null || request.get("refreshToken") == null) {
+            throw new InvalidParamException("[매개변수 입력 오류]userId, userName, refreshToken 입력 확인 필요");
+        }
         String userId = request.get("userId");
-        String username = request.get("userName");
+        String email = request.get("email");
         String refreshToken = request.get("refreshToken");
 
         // Refresh Token 검증
-        if (tokenService.validateRefreshToken(username, refreshToken)) {
-            String newAccessToken = tokenService.generateAccessToken(username, Integer.parseInt(userId));
-            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
-        } else {
-            return ResponseEntity.status(401).body("Invalid refresh token");
-        }
+        tokenService.validateRefreshToken(email, refreshToken);
+        String newAccessToken = tokenService.generateAccessToken(email, Integer.parseInt(userId));
+
+        HttpHeaders header = new HttpHeaders();
+        header.add("Authorization", newAccessToken);
+        return new CommonResponse(header, "엑세스 토큰 재발급 완료");
     }
 
     /**
@@ -51,11 +58,17 @@ public class TokenController {
             description = "로그아웃 시 Refresh Token 삭제하기 위한 api"
     )
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
+    public CommonResponse logout(@RequestBody Map<String, String> request) {
+
+        if (request.get("userId") == null || request.get("email") == null) {
+            throw new InvalidParamException("[매개변수 입력 오류]userId, email 입력 확인 필요");
+        }
+
+        // 토큰을 저장하는 키를 이메일로만 하는게 맞나,,? 구글로만 할거면 상관없지만
         String email = request.get("email");
 
         // Redis에서 Refresh Token 삭제
         tokenService.removeRefreshToken(email);
-        return ResponseEntity.ok("Logged out successfully");
+        return new CommonResponse("로그아웃 성공");
     }
 }

@@ -3,6 +3,8 @@ package com.bbip.domain.rtmp.controller;
 import com.bbip.domain.rtmp.Dto.StreamKeyDto;
 import com.bbip.domain.rtmp.Dto.StreamListDto;
 import com.bbip.domain.rtmp.service.RtmpService;
+import com.bbip.global.exception.InvalidParamException;
+import com.bbip.global.exception.NoSelectedRtmpServerException;
 import com.bbip.global.response.ListResponse;
 import com.bbip.global.response.SingleResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +30,10 @@ public class RtmpController {
     public SingleResponse<StreamKeyDto> modifyStreamKey(
             @RequestHeader(value = "Authorization", required = false) String accessToken,
             @RequestBody StreamKeyDto rtmpDto) {
+
+        if (rtmpDto.getServerId() == 0 || rtmpDto.getServerId() > 8) {
+            throw new InvalidParamException("[지원하지 않는 서버 ID] 유효한 값: 1 ~ 8");
+        }
 
         StreamKeyDto result = rtmpService.updateStreamkey(accessToken, rtmpDto);
 
@@ -58,6 +64,10 @@ public class RtmpController {
     public ListResponse<StreamKeyDto> modifyStreamList(
             @RequestHeader(value = "Authorization", required = false) String accessToken,
             @RequestBody StreamListDto streamList) {
+
+        for (Integer serverId : streamList.getServers()) {
+            if (serverId == 0 || serverId > 8) { throw new InvalidParamException("[지원하지 않는 서버 ID] 유효한 값: 1 ~ 8"); }
+        }
 
         List<StreamKeyDto> result = rtmpService.updateStreamList(accessToken, streamList);
 

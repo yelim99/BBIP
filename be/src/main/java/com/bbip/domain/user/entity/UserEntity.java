@@ -44,6 +44,7 @@ public class UserEntity {
                 .name(name)
                 .email(email)
                 .nickname(nickname)
+                .oauthProvider(oauthProvider)
                 .build();
     }
 
