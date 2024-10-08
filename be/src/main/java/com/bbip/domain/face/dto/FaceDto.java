@@ -20,7 +20,7 @@ public class FaceDto {
     private byte[] faceEmbedding;
     private Boolean self;
 
-    FaceDto (Boolean self) {
+    public FaceDto (Boolean self) {
         this.self = self;
     }
 
