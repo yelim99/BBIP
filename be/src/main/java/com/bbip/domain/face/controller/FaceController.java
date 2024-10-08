@@ -24,7 +24,7 @@ public class FaceController {
 
     @Operation(
             summary = "얼굴 등록",
-            description = "객체속성은 \"selt\"만 설정 필요. 본인인지(true) 아닌지(false)"
+            description = "객체속성은 \"self\"만 설정 필요. 본인인지(true) 아닌지(false)"
     )
     @PostMapping(consumes = "multipart/form-data")
     public SingleResponse<FaceDto> saveFace(
@@ -33,6 +33,18 @@ public class FaceController {
             @RequestPart("image") MultipartFile image) throws IOException
     {
         FaceDto savedFace = faceService.addFace(accessToken, face, image);
+
+        return SingleResponse.<FaceDto>builder().message("얼굴 등록 완료").data(savedFace).build();
+    }
+
+
+    @PostMapping(value = "/test", consumes = "multipart/form-data")
+    public SingleResponse<FaceDto> saveFace(
+            @RequestHeader(value = "Authorization", required = true) String accessToken,
+            @RequestPart("image") MultipartFile image) throws IOException
+    {
+
+        FaceDto savedFace = faceService.addFace(accessToken, new FaceDto(true), image);
 
         return SingleResponse.<FaceDto>builder().message("얼굴 등록 완료").data(savedFace).build();
     }
