@@ -3,7 +3,6 @@ package com.bbip.domain.user.controller;
 import com.bbip.domain.user.dto.UserDto;
 import com.bbip.domain.user.service.UserServiceImpl;
 import com.bbip.global.response.CommonResponse;
-import com.bbip.global.response.ListResponse;
 import com.bbip.global.response.SingleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,6 @@ public class UserController {
     public SingleResponse<UserDto> modifyUser(@RequestHeader(value = "Authorization", required = false) String accessToken,
                                               @RequestBody UserDto user) {
 
-        // 유효성 검사
         UserDto modifiedUser = userService.updateUser(accessToken, user);
         return SingleResponse.<UserDto>builder().
                 message("사용자 정보 수정 완료").data(modifiedUser).build();

@@ -29,10 +29,7 @@ public class FaceSerivceImpl implements FaceService {
 
     @Override
     public FaceDto addFace(String accessToken, FaceDto face, MultipartFile image) {
-        log.info("addFace호출");
-        log.info("accessToken {}", accessToken);
         // JWT토큰에서 사용자 id 추출
-
         int userId = jwtUtil.getUserIdFromJWT(accessToken);
 
         face.setUserId(userId);
@@ -40,8 +37,10 @@ public class FaceSerivceImpl implements FaceService {
         face.setFileName(fileName);
         String fileUrl = fileUploadUtil.uploadFile(image, fileName);
         face.setFileUrl(fileUrl);
+
         byte[] faceembedding = faceUtil.getFaceEmbeddingFromFastAPI(fileUrl);
         face.setFaceEmbedding(faceembedding);
+
         UserEntity userEntity = userRepository.findById(userId);
         FaceEntity faceEntity = faceRepository.save(face.toEntity(userEntity));
         log.info("얼굴 등록 완료");

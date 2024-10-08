@@ -50,7 +50,7 @@ spring:
         use_sql_comments: true
         globally_quoted_identifiers: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     show-sql: false
 
@@ -89,5 +89,13 @@ springdoc:
   show-actuator: true
   default-produces-media-type: application/json
 
-
-
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        security: DEBUG
+#        web:
+#          socket: DEBUG
+#          socket.sockjs: DEBUG
+#          socket.messaging: DEBUG
+#        messaging: DEBUG

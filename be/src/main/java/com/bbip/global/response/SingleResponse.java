@@ -1,6 +1,7 @@
 package com.bbip.global.response;
 
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 @Getter
 @Setter

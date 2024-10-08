@@ -5,7 +5,6 @@ import com.bbip.domain.face.service.FaceService;
 import com.bbip.global.response.CommonResponse;
 import com.bbip.global.response.ListResponse;
 import com.bbip.global.response.SingleResponse;
-import com.bbip.global.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,20 +21,18 @@ import java.util.List;
 public class FaceController {
 
     private final FaceService faceService;
-    private final JwtUtil jwtUtil;
 
     @Operation(
             summary = "얼굴 등록",
             description = "객체속성은 \"selt\"만 설정 필요. 본인인지(true) 아닌지(false)"
     )
-    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    @PostMapping(consumes = "multipart/form-data")
     public SingleResponse<FaceDto> saveFace(
             @RequestHeader(value = "Authorization", required = true) String accessToken,
             @RequestPart("face") FaceDto face,
             @RequestPart("image") MultipartFile image) throws IOException
     {
-        String token = accessToken.substring(7);
-        FaceDto savedFace = faceService.addFace(token, face, image);
+        FaceDto savedFace = faceService.addFace(accessToken, face, image);
 
         return SingleResponse.<FaceDto>builder().message("얼굴 등록 완료").data(savedFace).build();
     }
@@ -45,7 +42,7 @@ public class FaceController {
     )
     @GetMapping(value = "/self")
     public SingleResponse<FaceDto> findMyFaces(
-            @RequestAttribute(value = "AccessToken", required = true) String accessToken)
+            @RequestHeader(value = "Authorization", required = true) String accessToken)
     {
         FaceDto selfie = faceService.findMyFace(accessToken);
 
@@ -57,7 +54,7 @@ public class FaceController {
     )
     @GetMapping
     public ListResponse<FaceDto> getAllFaces(
-            @RequestAttribute(value = "AccessToken", required = true) String accessToken)
+            @RequestHeader(value = "Authorization", required = true) String accessToken)
     {
         List<FaceDto> faces = faceService.findAllFaces(accessToken);
 
@@ -70,7 +67,7 @@ public class FaceController {
     )
     @DeleteMapping(value = "/{id}")
     public CommonResponse deleteFace(
-            @RequestAttribute(value = "AccessToken", required = true) String accessToken,
+            @RequestHeader(value = "Authorization", required = true) String accessToken,
             @PathVariable("id") Integer id)
     {
         faceService.removeFace(id);

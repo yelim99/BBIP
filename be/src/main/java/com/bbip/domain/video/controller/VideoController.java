@@ -1,10 +1,12 @@
 package com.bbip.domain.video.controller;
 
 import com.bbip.domain.video.service.VideoService;
+import com.bbip.global.exception.InvalidParamException;
 import com.bbip.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +33,7 @@ public class VideoController {
             @RequestParam("video") MultipartFile video) {
 
         if (video.isEmpty()) {
-            return new CommonResponse(400, "입력 파일 없음");
+            throw new InvalidParamException("비디오 파일 미입력");
         }
 
         videoService.saveVideo(accessToken, video);

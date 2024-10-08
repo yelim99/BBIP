@@ -1,5 +1,7 @@
 package com.bbip.domain.video.service;
 
+import com.bbip.global.exception.EncodingFailException;
+import com.bbip.global.exception.VideoSaveFailException;
 import com.bbip.global.util.JwtUtil;
 import com.bbip.global.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
@@ -75,8 +77,7 @@ public class VideoServiceImpl implements VideoService {
             redisUtil.setDataExpire(filePath, fileName, expireTime);                    // 인코딩 파일 경로 redis 저장
             log.info("동영상 저장 완료");
         } catch (IOException e) {
-            log.error("동영상 저장 중 오류 발생");
-            throw new RuntimeException(e);
+            throw new VideoSaveFailException("원본 동영상 저장 중 오류 발생");
         }
 
         if (uploadFile.delete()) log.info("원본파일 삭제");       // 처음에 저장한 원본파일 삭제 후 로그 출력
@@ -120,7 +121,7 @@ public class VideoServiceImpl implements VideoService {
             }
             process.waitFor();
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            throw new EncodingFailException("녹화영상 인코딩 중 오류 발생");
         }
 
         return newFilePath;

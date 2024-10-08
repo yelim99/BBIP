@@ -25,19 +25,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("filterchain 진입");
+        log.info("필터 시작"+http.toString());
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        //.requestMatchers("/", "/login", "/oauth2/**", "/login/oauth2/code/**", "/public/**","/ws/**","/ws-genaral/**","/fast").permitAll()
+//                        .requestMatchers("/", "/login", "/oauth2/**", "/api/auth/refresh-token", "/public/**", "/error").permitAll()
                         .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
                         .successHandler(customOAuth2SuccessHandler))  // 성공 핸들러 설정
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/login"));
-
-        //http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        .logoutSuccessUrl("/login"))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> response.sendRedirect("/login")));
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
