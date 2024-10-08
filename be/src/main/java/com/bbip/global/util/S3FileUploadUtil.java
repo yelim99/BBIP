@@ -52,7 +52,7 @@ public class S3FileUploadUtil {
 
     private ObjectMetadata getObjectMetadtat(MultipartFile file) {
         ObjectMetadata objectMetadata = new ObjectMetadata();
-        objectMetadata.setContentType(file.getContentType());
+        objectMetadata.setContentType("image/jpeg");
         objectMetadata.setContentLength(file.getSize());
         return objectMetadata;
     }
