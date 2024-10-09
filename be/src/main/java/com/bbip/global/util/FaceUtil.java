@@ -1,5 +1,6 @@
 package com.bbip.global.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -24,6 +25,7 @@ public class FaceUtil {
 
     // 이미지 URL을 FastAPI로 보내기 위한 DTO
     public static class ImageRequest {
+        @JsonProperty("image_url")
         private String imageUrl;
 
         public ImageRequest(String imageUrl) {
