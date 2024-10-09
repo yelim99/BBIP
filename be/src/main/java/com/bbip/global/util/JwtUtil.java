@@ -68,6 +68,8 @@ public class JwtUtil {
 
     // JWT 토큰에서 사용자 아이디 추출
     public Integer getUserIdFromJWT(String tokenWithBearer) {
+        log.fin
+
         Claims claims = Jwts.parser()
                 .setSigningKey(JWT_SECRET)
                 .parseClaimsJws(resolveToken(tokenWithBearer))

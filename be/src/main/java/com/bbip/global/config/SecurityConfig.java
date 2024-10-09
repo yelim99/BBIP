@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login"))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> response.sendRedirect("/login")));
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        //http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
