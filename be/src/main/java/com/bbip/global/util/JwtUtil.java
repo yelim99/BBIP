@@ -74,6 +74,7 @@ public class JwtUtil {
                 .setSigningKey(JWT_SECRET)
                 .parseClaimsJws(resolveToken(tokenWithBearer))
                 .getBody();
+        log.info("claims: {}", claims);
 
         log.info("userId: {}", claims.get("userId"));
 
@@ -103,6 +104,7 @@ public class JwtUtil {
         if (token != null && token.startsWith(TOKEN_PREFIX)) {
             return token.substring(7); // "Bearer " 제거
         }
+        log.info("token: {}", token);
         return token;
     }
 }
