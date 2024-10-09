@@ -29,6 +29,7 @@ public class FaceEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
+    @Lob
     @Column(name = "face_embedding", nullable = false)
     private byte[] faceEmbedding;
 
