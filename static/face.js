@@ -1,6 +1,6 @@
 var pc = null;
 // WebSocket 연결
-const socket = new WebSocket('ws://localhost:8000/face/ws');
+const socket = new WebSocket('ws://172.20.10.4:8000/face/ws');
 
 socket.onopen = () => {
     console.log("websocket 연결됨");

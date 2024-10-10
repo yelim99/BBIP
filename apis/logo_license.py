@@ -53,8 +53,7 @@ else:
     print("GPU 사용 불가능, CPU로 실행")
 
 # 모델 불러오기
-model2 = YOLO('../model/logo_license_detection_yolo.pt')
-model2.to(device)
+model2 = YOLO("model/logo_license_detection_yolo.engine")
 
 # 추적기 리스트
 trackers = []
