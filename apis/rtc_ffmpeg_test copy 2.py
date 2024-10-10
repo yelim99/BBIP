@@ -46,14 +46,15 @@ AUDIO_BUFFER_SIZE = 60  # 오디오 버퍼에 저장할 샘플 수
 # 버퍼 초기화
 video_buffer = collections.deque(maxlen=VIDEO_BUFFER_SIZE)
 audio_buffer = collections.deque(maxlen=AUDIO_BUFFER_SIZE)
-
+import torch
+torch.cuda.get_device_name(0)	#gpu 확인
+torch.cuda.is_available()
 # GPU 사용 설정
-device = torch.device("cuda")  
+device = torch.device("cuda")
 
 # 모델 불러오기
 model = YOLO('../model/face_detection_yolo.pt')
 model.to(device)
-
 # FaceNet 모델 로드
 facenet_model = models.load_model('model/facenet_keras.h5')
 model2 = YOLO('../model/logo_license_detection_yolo.pt')
@@ -118,16 +119,10 @@ class VideoTransformTrack(MediaStreamTrack):
         
             # 모델 예측
             detection = model(image_bgr)[0]
-            l_detection = model2(image_bgr)[0]
             face_boxes = []
-            l_boxes = []
             trackers = []
             tracker_faces = []
 
-            for data in detection.boxes.data.tolist():
-                confidence = float(data[4])
-                if confidence < 0.6:
-                    continue
             for data in detection.boxes.data.tolist():
                 confidence = float(data[4])
                 if confidence < 0.6:
@@ -199,12 +194,12 @@ class VideoTransformTrack(MediaStreamTrack):
                 tracker_faces.pop(i)
         
         
-        img = modelutil.process_frame(image_bgr, model2)
+ #       img = modelutil.process_frame(image_bgr, model2)
         processing_end_time = time.perf_counter()
         print(f"모델 처리 시간: {processing_end_time - processing_start_time:.4f} 초")
         
         new_frame_start_time = time.perf_counter()
-        new_frame = VideoFrame.from_ndarray(img, format="bgr24")
+        new_frame = VideoFrame.from_ndarray(image_bgr, format="bgr24")
         new_frame.pts = frame.pts
         print(f"현재 프레임 frame.pts: {frame.pts}")
         new_frame.time_base = frame.time_base
