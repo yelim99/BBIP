@@ -136,6 +136,7 @@ class MediaTransformTrack(MediaStreamTrack):
                         name = "face" #얼굴이면 추적기에 face로 등록해놓음
                         trackers.append((tracker, (xmin,ymin,w,h),object_region.size, name))
             
+                object_boxes=[]
                 detection = model2(image_bgr)[0]    #로고 및 차번호판 감지
 
                 for data in detection.boxes.data.tolist():
@@ -205,9 +206,6 @@ class MediaTransformTrack(MediaStreamTrack):
             self.is_processing = True
             print("비디오 변환 처리")
 
-
-            
-            img = modelutil.process_frame(image_bgr, model2)
             processing_end_time = time.perf_counter()
             print(f"모델 처리 시간: {processing_end_time - processing_start_time:.4f} 초")
             
