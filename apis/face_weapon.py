@@ -15,7 +15,6 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, R
 from av import VideoFrame
 from fastapi import APIRouter
 from utils import blur_yolo as modelutil
-from utils import recognize_face as recogFace
 import collections
 from ultralytics import YOLO
 

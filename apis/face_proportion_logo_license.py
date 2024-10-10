@@ -15,7 +15,6 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, R
 from av import VideoFrame
 from fastapi import APIRouter
 from utils import blur_yolo as modelutil
-from utils import recognize_face as recogFace
 import collections
 from ultralytics import YOLO
 
@@ -180,7 +179,7 @@ class MediaTransformTrack(MediaStreamTrack):
                         # 얼굴 부분을 원형으로 블러 처리
                         if(target_selected==False):
                             target_selected = True
-                        elif object_region.size > 0:
+                        elif object_region > 0:
                             mask = np.zeros_like(image_bgr)
                             center = (xmin + w // 2, ymin + h // 2)
                             radius = int(min(w, h) / 2)
@@ -194,7 +193,7 @@ class MediaTransformTrack(MediaStreamTrack):
                             trackers.pop(i)
                             tracker_labels.pop(i)
                     else:
-                        if object_region.size > 0:
+                        if object_region > 0:
                             # 블러 처리
                             blurred_img = cv2.GaussianBlur(image_bgr, (51, 51), 20)
                             # 블러 처리된 이미지에서 해당 영역만 복사

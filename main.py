@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from apis.apis_base import api_router
 from fastapi.staticfiles import StaticFiles
 import os
+import uvicorn
 
 # 모든 origin에서 발생하는 요청들 처리함
 def include_cors(app):
@@ -29,3 +30,6 @@ def start_application():
     return app
 
 app = start_application()
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, ws_ping_interval=600, ws_ping_timeout=60)
