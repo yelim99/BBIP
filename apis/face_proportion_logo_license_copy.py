@@ -19,7 +19,52 @@ from utils import recognize_face as recogFace
 import collections
 from ultralytics import YOLO
 
+
 import torch
+# TensorRT 관련 라이브러리 임포트
+import tensorrt as trt
+
+# TensorRT 모델 로드 함수
+def load_tensorrt_model(model_path):
+    logger = trt.Logger(trt.Logger.WARNING)
+    with open(model_path, 'rb') as f:
+        engine_data = f.read()
+    
+    runtime = trt.Runtime(logger)
+    engine = runtime.deserialize_cuda_engine(engine_data)
+    
+    return engine
+
+# TensorRT 추론 함수
+def infer_tensorrt(engine, context, input_data):
+    # 입력 및 출력 버퍼 할당
+    input_shape = (1, 3, 640, 640)  # YOLO 모델의 입력 크기
+    input_size = trt.volume(input_shape) * np.float32().itemsize
+    output_shape = (1, 25200, 85)  # YOLOv5의 출력 크기
+    output_size = trt.volume(output_shape) * np.float32().itemsize
+
+    d_input = engine.mem_alloc(input_size)
+    d_output = engine.mem_alloc(output_size)
+    
+    bindings = [int(d_input), int(d_output)]
+    
+    # 입력 데이터 복사
+    cuda.memcpy_htod(d_input, input_data)
+
+    # 추론 수행
+    context.execute(batch_size=1, bindings=bindings)
+
+    # 결과 복사
+    output_data = np.empty(output_shape, dtype=np.float32)
+    cuda.memcpy_dtoh(output_data, d_output)
+
+    return output_data
+
+# TensorRT 모델 로드
+tensorrt_model_path = '../model/face_detection_yolo.engine'  # TensorRT 모델 경로
+engine = load_tensorrt_model(tensorrt_model_path)
+context = engine.create_execution_context()
+
 
 if os.name == 'nt':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -181,11 +226,23 @@ class MediaTransformTrack(MediaStreamTrack):
             # YUV420P에서 BGR로 변환
             image_bgr = cv2.cvtColor(image, cv2.COLOR_YUV2BGR_I420)
             
-            
+            # 기존 코드에서 YOLO 모델 호출 부분 수정
             if frame_count % 20 == 0 or len(trackers) == 0:
-            
-                # 모델 예측
-                detection = model(image_bgr)[0]
+                # TensorRT 추론
+                detection_output = infer_tensorrt(engine, context, image_bgr)
+
+                # YOLOv5의 출력 처리
+                object_boxes = []  # 한 프레임 내에서 검출된 객체들
+                for data in detection_output:
+                    confidence = float(data[4])
+                    if confidence < 0.6:
+                        continue
+
+                    xmin, ymin, xmax, ymax = int(data[0]), int(data[1]), int(data[2]), int(data[3])
+                    w = xmax - xmin
+                    h = ymax - ymin
+                    object_boxes.append((xmin, ymin, w, h))
+
                 object_boxes = []     # 한 프레임 내에서 검출된 객체들
                 trackers = []       # 추적기
 
@@ -259,7 +316,7 @@ class MediaTransformTrack(MediaStreamTrack):
                             cv2.circle(mask, center, radius + 10, (255, 255, 255), -1)
 
                             # 블러 처리된 이미지를 생성하고 원형 마스크를 적용하여 블러 처리
-                            blurred_img = cv2.GaussianBlur(image_bgr, (21, 21), 20)
+                            blurred_img = cv2.GaussianBlur(image_bgr, (11, 11), 20)
                             image_bgr = np.where(mask == (255, 255, 255), blurred_img, image_bgr)
                     elif label in ["logo", "license"]:
                         if object_region > 0:
