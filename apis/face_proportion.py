@@ -16,8 +16,8 @@ from av import VideoFrame
 from fastapi import APIRouter
 from utils import blur_yolo as modelutil
 import collections
+from aiortc.contrib.media import MediaPlayer, MediaRelay
 from ultralytics import YOLO
-
 import torch
 
 if os.name == 'nt':
@@ -29,6 +29,7 @@ router = APIRouter()
 ROOT = os.path.dirname(__file__)
 logging.basicConfig(level=logging.INFO)
 pcs = set()
+relay = MediaRelay()
 
 # 프레임 카운터 및 FPS 체크를 위한 변수
 frame_count = 0
@@ -53,8 +54,7 @@ else:
     print("GPU 사용 불가능, CPU로 실행")
 
 # 모델 불러오기
-model = YOLO('../model/face_detection_yolo.pt')
-model.to(device)
+model = YOLO("model/face_detection_yolo.engine")
 
 # 추적기 리스트
 trackers = []
@@ -62,73 +62,7 @@ tracker_labels = []
 
 # 프레임 카운터 및 FPS 체크를 위한 변수
 frame_count = 0
-
-async def start_ffmpeg_process():
-    global ffmpeg_process
-    if ffmpeg_process is None:
-        ffmpeg_command = [
-            'ffmpeg', '-re',
-            '-loglevel', 'debug',
-            '-f', 'rawvideo',
-            '-pixel_format', 'bgr24',
-            '-video_size', '640x480',
-            '-r', '30',
-            '-i', 'pipe:0',
-            '-f', 's16le',  # 오디오 입력 포맷을 설정
-            '-ar', '44100', # 샘플링 레이트
-            '-ac', '2',     # 스테레오 채널
-            '-i', 'pipe:1',
-            '-c:v', 'libx264',
-            '-b:v', '1500k',    # 비디오 비트레이트
-            '-c:a', 'aac',      # 오디오 코덱 설정
-            '-bufsize', '1500k',
-            '-b:a', '128k',     # 오디오 비트레이트
-            '-preset', 'fast',
-            '-pix_fmt', 'yuv420p',
-            '-g', '60',
-            '-f', 'flv',
-            'rtmp://a.rtmp.youtube.com/live2/t7fx-gb4z-stjk-q22h-8mt2'
-            # YouTube RTMP URL과 스트림 키 설정 (맨 뒤 슬래시 다음이 스트림 키)       
-        ]
-        
-        ffmpeg_process = await asyncio.create_subprocess_exec(
-            *ffmpeg_command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        #print('FFmpeg 프로세스 시작')
-        asyncio.create_task(log_ffmpeg_output(ffmpeg_process))
-
-async def log_ffmpeg_output(process):
-    while True:
-        output = await process.stderr.read(100)
-        if not output:
-            break
-        #print(output.decode())
-
-async def send_to_ffmpeg():
-    global ffmpeg_process
-    while ffmpeg_process:
-        await asyncio.sleep(0.1)  # 0.1초 간격으로 확인
-        # 비디오 데이터 전송
-        while video_buffer:
-            frame = video_buffer.popleft()
-            ffmpeg_process.stdin.write(frame.tobytes())
-            await ffmpeg_process.stdin.drain()
-
-        # 오디오 데이터 전송
-        while audio_buffer:
-            frame = audio_buffer.popleft()
-            ffmpeg_process.stdin.write(frame.tobytes())
-            await ffmpeg_process.stdin.drain()
-
-        #print("FFmpeg에 데이터 전송 중...")
-        
-        if ffmpeg_process.returncode is not None:
-            #print('FFmpeg 프로세스가 종료되었습니다.')
-            break
+fps_start_time = time.perf_counter()
 
 class MediaTransformTrack(MediaStreamTrack):
 
@@ -209,7 +143,7 @@ class MediaTransformTrack(MediaStreamTrack):
                     ymax = ymin + h
                     
                     # 이름 표시
-                    cv2.putText(image_bgr, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                    #cv2.putText(image_bgr, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
                     # 얼굴 부분을 원형으로 블러 처리
                     if(target_selected==False):
@@ -272,6 +206,22 @@ class MediaTransformTrack(MediaStreamTrack):
 async def index():
     with open(os.path.join(ROOT, "..\\static\\index.html"), encoding='utf-8') as f:
         return f.read()
+    
+    @pc.on("icecandidate")
+    async def on_icecandidate(event):
+        if event.candidate:
+            # Send the ICE candidate to the client (using WebSocket or HTTP)
+            pass
+
+    await pc.setRemoteDescription(offer)
+    answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    return {
+        "sdp": pc.localDescription.sdp,
+        "type": pc.localDescription.type
+    }
+
 
 @router.post("/offer")
 async def offer(offer: RTCSessionDescription):
@@ -306,8 +256,8 @@ async def offer(offer: RTCSessionDescription):
 async def websocket_endpoint(websocket: WebSocket):
     logging.info("ws 요청")
     await websocket.accept()
-    client_id = str(uuid.uuid4())
-    await websocket.send_text(json.dumps({"client_id": client_id}))
+    #client_id = str(uuid.uuid4())
+    #await websocket.send_text(json.dumps({"client_id": client_id}))
 
     pc = RTCPeerConnection()
     # STUN/TURN 서버 설정

@@ -53,10 +53,8 @@ else:
     print("GPU 사용 불가능, CPU로 실행")
 
 # 모델 불러오기
-model = YOLO('../model/face_detection_yolo.pt')
-model.to(device)
-model2 = YOLO('../model/weapon_detection_yolo.pt')
-model2.to(device)
+model = YOLO("model/face_detection_yolo.engine")
+model2 = YOLO("model/weapon_detection_yolo.engine")
 
 # 추적기 리스트
 trackers = []
@@ -170,7 +168,7 @@ class MediaTransformTrack(MediaStreamTrack):
                     ymax = ymin + h
                     
                     # 이름 표시
-                    cv2.putText(image_bgr, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                    #cv2.putText(image_bgr, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
                     if label == "face":
                         # 얼굴 부분을 원형으로 블러 처리
