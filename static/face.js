@@ -1,6 +1,6 @@
 var pc = null;
 // WebSocket 연결
-const socket = new WebSocket('ws://127.0.0.1:8000/rtc/ws');
+const socket = new WebSocket('ws://127.0.0.1:8000/face/ws');
 
 socket.onopen = () => {
     console.log("websocket 연결됨");
@@ -116,7 +116,7 @@ async function start() {
         // 웹캠 및 오디오 스트림 요청
         
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { frameRate: 15 }, 
+            video: { frameRate: 10 }, 
             audio: true });
         const video = document.getElementById('video');
 
