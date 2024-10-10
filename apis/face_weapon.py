@@ -202,10 +202,7 @@ class MediaTransformTrack(MediaStreamTrack):
                                 tracker_labels.pop(i)
             self.is_processing = True
             print("비디오 변환 처리")
-
-
             
-            img = modelutil.process_frame(image_bgr, model2)
             processing_end_time = time.perf_counter()
             print(f"모델 처리 시간: {processing_end_time - processing_start_time:.4f} 초")
             
