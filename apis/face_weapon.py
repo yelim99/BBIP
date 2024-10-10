@@ -56,7 +56,7 @@ else:
 # 모델 불러오기
 model = YOLO('../model/face_detection_yolo.pt')
 model.to(device)
-model2 = YOLO('../model/logo_license_detection_yolo.pt')
+model2 = YOLO('../model/weapon_detection_yolo.pt')
 model2.to(device)
 
 # 추적기 리스트
@@ -79,9 +79,9 @@ class MediaTransformTrack(MediaStreamTrack):
     async def recv(self):
         global frame_count, fps_start_time  # 글로벌 변수 사용
         global model, known_face_embeddings, known_face_names, trackers, tracker_faces
+        frame = await self.track.recv()
 
         if self.kind == 'video':
-
             start_time = time.perf_counter()  # 시작 시간 기록
 
             if self.is_processing:
@@ -92,7 +92,6 @@ class MediaTransformTrack(MediaStreamTrack):
             print("비디오 변환 처리")
 
             frame_start_time = time.perf_counter()
-            frame = await self.track.recv()
             frame_end_time = time.perf_counter()
             print(f"프레임 수신 시간: {frame_end_time - frame_start_time:.4f} 초")
 
@@ -135,15 +134,15 @@ class MediaTransformTrack(MediaStreamTrack):
                         tracker.init(image_bgr, (xmin, ymin, w, h))
                         name = "face" #얼굴이면 추적기에 face로 등록해놓음
                         trackers.append((tracker, (xmin,ymin,w,h),object_region.size, name))
-            
-                detection = model2(image_bgr)[0]    #로고 및 차번호판 감지
+                object_boxes = []
+                detection = model2(image_bgr)[0]    #흉기 감지
 
                 for data in detection.boxes.data.tolist():
                     confidence = float(data[4])
                     if confidence < 0.6:
                         continue
 
-                    xmin, ymin, xmax, ymax, label = int(data[0]), int(data[1]), int(data[2]), int(data[3]), int(data[4])
+                    xmin, ymin, xmax, ymax = int(data[0]), int(data[1]), int(data[2]), int(data[3])
                     w = xmax - xmin
                     h = ymax - ymin
                     object_boxes.append((xmin, ymin, w, h))
@@ -155,8 +154,7 @@ class MediaTransformTrack(MediaStreamTrack):
                         if object_region.size > 0:
                             tracker = cv2.TrackerCSRT_create()
                             tracker.init(image_bgr, (xmin, ymin, w, h))
-                            name="logo"
-                            if(label==0): name="license"                    
+                            name="weapon"                  
                             trackers.append((tracker, (xmin,ymin,w,h),object_region.size,name))
                 
             # 넓이에 따라 내림차순 정렬
@@ -179,21 +177,21 @@ class MediaTransformTrack(MediaStreamTrack):
                         # 얼굴 부분을 원형으로 블러 처리
                         if(target_selected==False):
                             target_selected = True
-                        elif object_region.size > 0:
+                        elif object_region > 0:
                             mask = np.zeros_like(image_bgr)
                             center = (xmin + w // 2, ymin + h // 2)
                             radius = int(min(w, h) / 2)
                             cv2.circle(mask, center, radius + 10, (255, 255, 255), -1)
 
                             # 블러 처리된 이미지를 생성하고 원형 마스크를 적용하여 블러 처리
-                            blurred_img = cv2.GaussianBlur(image_bgr, (11, 11), 20)
+                            blurred_img = cv2.GaussianBlur(image_bgr, (21, 21), 20)
                             image_bgr = np.where(mask == (255, 255, 255), blurred_img, image_bgr)
                         else:
                             # 추적 실패 시 해당 추적기 제거
                             trackers.pop(i)
                             tracker_labels.pop(i)
                     else:
-                        if object_region.size > 0:
+                        if object_region > 0:
                             # 블러 처리
                             blurred_img = cv2.GaussianBlur(image_bgr, (51, 51), 20)
                             # 블러 처리된 이미지에서 해당 영역만 복사
@@ -234,6 +232,7 @@ class MediaTransformTrack(MediaStreamTrack):
             total_time = time.perf_counter() - start_time
             print(f"총 처리 시간: {total_time:.4f} 초")
             return new_frame
+        
         elif self.kind == "audio":
             #print("오디오 처리 중")
             audio_data = frame.to_ndarray()
