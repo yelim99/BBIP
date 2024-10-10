@@ -1,4 +1,4 @@
-import datetime
+import time
 import cv2
 from ultralytics import YOLO
 
@@ -31,9 +31,14 @@ def process_frame(frame, model):
         if confidence < CONFIDENCE_THRESHOLD:
             continue
 
-        xmin, ymin, xmax, ymax = int(data[0]), int(data[1]), int(data[2]), int(data[3])
+        xmin, ymin, xmax, ymax, label = int(data[0]), int(data[1]), int(data[2]), int(data[3]), int(data[4])
         # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), GREEN, 2)
-        # 얼굴 부분을 블러 처리
+        # 검출 부분을 블러 처리
+        # 이름 표시
+        if label==0:
+            cv2.putText(frame, "license", (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        else:
+            cv2.putText(frame, "logo", (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         face_region = frame[ymin:ymax, xmin:xmax]
         blurred_face = cv2.GaussianBlur(face_region, (51, 51), 20)
         frame[ymin:ymax, xmin:xmax] = blurred_face
@@ -47,6 +52,7 @@ def calculate_fps(start_time):
     :param start_time: 프레임 처리 시작 시간
     :return: FPS 값
     """
-    end_time = datetime.datetime.now()
-    total_time = (end_time - start_time).total_seconds()
-    return 1 / total_time
+    end_time = time.perf_counter()
+    total_time = end_time - start_time  # 두 시간을 float으로 계산
+    fps = 1 / total_time if total_time > 0 else 0  # FPS 계산
+    return fps

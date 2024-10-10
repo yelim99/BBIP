@@ -16,7 +16,7 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer, MediaRelay
 from av import VideoFrame
 from fastapi import APIRouter
-from utils import face_blur_yolo as yolo
+from utils import blur_yolo as yolo
 from ultralytics import YOLO
 
 

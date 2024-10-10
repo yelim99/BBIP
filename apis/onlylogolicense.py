@@ -36,9 +36,6 @@ frame_count = 0
 fps_start_time = time.perf_counter()
 
 
-# 전역 FFmpeg 프로세스
-ffmpeg_process = None
-
 # 버퍼 크기 설정
 VIDEO_BUFFER_SIZE = 60  # 비디오 버퍼에 저장할 프레임 수
 AUDIO_BUFFER_SIZE = 60  # 오디오 버퍼에 저장할 샘플 수
@@ -46,35 +43,24 @@ AUDIO_BUFFER_SIZE = 60  # 오디오 버퍼에 저장할 샘플 수
 # 버퍼 초기화
 video_buffer = collections.deque(maxlen=VIDEO_BUFFER_SIZE)
 audio_buffer = collections.deque(maxlen=AUDIO_BUFFER_SIZE)
-
+import torch
+torch.cuda.get_device_name(0)	#gpu 확인
+torch.cuda.is_available()
 # GPU 사용 설정
-device = torch.device("cuda")  
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    print("GPU 사용 가능:", torch.cuda.get_device_name(0))
+else:
+    device = torch.device("cpu")
+    print("GPU 사용 불가능, CPU로 실행")
 
-# 모델 불러오기
-model = YOLO('../model/face_detection_yolo.pt')
-model.to(device)
 
-# FaceNet 모델 로드
-facenet_model = models.load_model('model/facenet_keras.h5')
 model2 = YOLO('../model/logo_license_detection_yolo.pt')
 model2.to(device)
 
 
 
-# 등록된 얼굴 임베딩과 이름을 저장하는 리스트
-known_face_embeddings = []
-known_face_names = []
-
-# 특정 얼굴 등록 (이미지를 파일에서 불러오는 경우)
-image = cv2.imread('img/myl.jpg')
-recogFace.register_face(image, 'yelim',known_face_embeddings, known_face_names,facenet_model)
-
-# 추적기 리스트
-trackers = []
-tracker_faces = []
-
 class VideoTransformTrack(MediaStreamTrack):
-    global model, known_face_embeddings, known_face_names, trackers, tracker_faces
     kind = "video"
 
     def __init__(self, track, transform):
@@ -114,91 +100,7 @@ class VideoTransformTrack(MediaStreamTrack):
         # YUV420P에서 BGR로 변환
         image_bgr = cv2.cvtColor(image, cv2.COLOR_YUV2BGR_I420)
         
-        if frame_count % 20 == 0 or len(trackers) == 0:
-        
-            # 모델 예측
-            detection = model(image_bgr)[0]
-            l_detection = model2(image_bgr)[0]
-            face_boxes = []
-            l_boxes = []
-            trackers = []
-            tracker_faces = []
-
-            for data in detection.boxes.data.tolist():
-                confidence = float(data[4])
-                if confidence < 0.6:
-                    continue
-            for data in detection.boxes.data.tolist():
-                confidence = float(data[4])
-                if confidence < 0.6:
-                    continue
-
-                xmin, ymin, xmax, ymax = int(data[0]), int(data[1]), int(data[2]), int(data[3])
-                w = xmax - xmin
-                h = ymax - ymin
-                face_boxes.append((xmin, ymin, w, h))
-
-            # YOLO로 감지된 얼굴에 대해 CSRT 추적기 추가
-            for (xmin, ymin, w, h) in face_boxes:
-                tracker = cv2.TrackerCSRT_create()
-                trackers.append((tracker, (xmin, ymin, w, h)))
-                tracker.init(image_bgr, (xmin, ymin, w, h))
-
-                # 추적된 얼굴 부분을 잘라내서 얼굴 인식 수행
-                face_region = image_bgr[ymin:ymin+h, xmin:xmin+w]
-                if face_region.size > 0:
-                    face_embedding = recogFace.get_face_embedding(facenet_model, face_region)
-                    match_found = False
-                    name = "Unknown"
-                    for i, known_embedding in enumerate(known_face_embeddings):
-                        if recogFace.is_match(known_embedding, face_embedding):
-                            match_found = True
-                            name = known_face_names[i]
-                            break
-                    tracker_faces.append(name)
-                else:
-                    tracker_faces.append("Unknown")
-
-        # 추적된 얼굴들 업데이트
-        for i, (tracker, bbox) in enumerate(trackers):
-            ret, bbox = tracker.update(image_bgr)
-            if ret:
-                (xmin, ymin, w, h) = [int(v) for v in bbox]
-                xmax = xmin + w
-                ymax = ymin + h
-                face_region = image_bgr[ymin:ymax, xmin:xmax]
-
-                # 매칭된 이름 가져오기
-                name = tracker_faces[i] if i < len(tracker_faces) else "Unknown"
-
-                # 이름 표시
-                cv2.putText(image_bgr, name, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-                if name == "Unknown":
-                    # # 얼굴 부분 블러 처리
-                    # if face_region.size > 0:
-                    #     blur_face = cv2.GaussianBlur(face_region, (51, 51), 20)
-                    #     img[ymin:ymax, xmin:xmax] = blur_face
-                    # 얼굴 부분을 원형으로 블러 처리
-                    if face_region.size > 0:
-                        mask = np.zeros_like(image_bgr)
-                        center = (xmin + w // 2, ymin + h // 2)
-                        radius = int(min(w, h) / 2)
-                        cv2.circle(mask, center, radius+10, (255, 255, 255), -1)
-
-                        # 블러 처리된 이미지를 생성하고 원형 마스크를 적용하여 블러 처리
-                        blurred_img = cv2.GaussianBlur(image_bgr, (11, 11), 20)
-                        image_bgr = np.where(mask == (255, 255, 255), blurred_img, image_bgr)
-                else:
-                    # 등록된 얼굴은 블러 해제 (아무 처리도 하지 않음)
-                    pass
-
-            else:
-                # 추적 실패 시 해당 추적기 제거
-                trackers.pop(i)
-                tracker_faces.pop(i)
-        
-        
+    
         img = modelutil.process_frame(image_bgr, model2)
         processing_end_time = time.perf_counter()
         print(f"모델 처리 시간: {processing_end_time - processing_start_time:.4f} 초")
