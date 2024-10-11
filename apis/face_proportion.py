@@ -72,6 +72,34 @@ class MediaTransformTrack(MediaStreamTrack):
         self.kind = kind
         self.is_processing = False
 
+         # FFmpeg 명령어 설정
+        ffmpeg_command = [
+            'ffmpeg', '-re',
+            '-f', 'rawvideo',
+            '-pixel_format', 'bgr24',
+            '-video_size', '640x480',  # 비디오 크기 설정
+            '-r', '15',
+            '-i', '-',  # stdin에서 입력받음
+            '-f', 'lavfi',
+            '-i', 'anullsrc=r=44100:cl=stereo',
+            '-c:v', 'libx264',
+            '-b:v', '1500k',  # 비디오 비트레이트
+            '-c:a', 'aac',  # 오디오 코덱 설정 (빈 오디오를 aac로 인코딩
+            '-b:a', '128k',  # 오디오 비트레이트
+            '-preset', 'veryfast',
+             '-maxrate', '3000k',
+             '-bufsize', '6000k',
+            '-pix_fmt', 'yuv420p',
+            '-g', '30',
+            '-vf', 'scale=360:640',
+            '-f', 'flv',
+            'rtmp://a.rtmp.youtube.com/live2/ujj9-6fa7-9xy9-04w7-09bs'  # YouTube RTMP URL과 스트림 키 설정
+        ]
+
+        # FFmpeg 프로세스를 시작
+        self.ffmpeg_process = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE)
+        print('송출')
+
 
     async def recv(self):
         global frame_count, fps_start_time  # 글로벌 변수 사용
@@ -185,6 +213,28 @@ class MediaTransformTrack(MediaStreamTrack):
             self.is_processing = False
             total_time = time.perf_counter() - start_time
             print(f"총 처리 시간: {total_time:.4f} 초")
+            # FFmpeg 프로세스로 처리된 프레임 전달
+            # image_bgr= image_bgr.reshape(640,480)
+            print(image_bgr.shape)
+            # 비디오 데이터가 올바른 형식인지 확인
+            # if image_bgr.shape[0] != 480 or image_bgr.shape[1] != 640 or image_bgr.dtype != np.uint8:
+            #     print("비디오 데이터 형식이 올바르지 않습니다.")
+            #     image_bgr= cv2.resize(image_bgr, (480, 640))
+            # # img_bgr= cv2.resize(img_bgr, (480, 640))
+            # # print(image_bgr.shape)
+            # self.ffmpeg_process.stdin.write(image_bgr.tobytes())
+            if image_bgr.shape[0] != 480 or image_bgr.shape[1] != 640 or image_bgr.dtype != np.uint8:
+                print("비디오 데이터 형식이 올바르지 않습니다.")
+                print(f"현재 형상: {image_bgr.shape}, 현재 데이터 유형: {image_bgr.dtype}")
+                image_bgr = cv2.resize(image_bgr, (640, 480))  # 올바른 크기로 조정
+
+            # 비디오 데이터가 올바른 형식인지 확인
+            if image_bgr.shape[0] == 480 and image_bgr.shape[1] == 640 and image_bgr.dtype == np.uint8:
+                print("비디오 데이터 형식이 올바릅니다.")
+                self.ffmpeg_process.stdin.write(image_bgr.tobytes())
+            else:
+                print("비디오 데이터 형식이 여전히 올바르지 않습니다.")
+
             return new_frame
         
         elif self.kind == "audio":
@@ -194,14 +244,11 @@ class MediaTransformTrack(MediaStreamTrack):
             return frame
 
     def __del__(self):
-        # FFmpeg 프로세스 종료
-        global ffmpeg_process
-        
-        if ffmpeg_process:
-            ffmpeg_process.stdin.close()
-            ffmpeg_process.wait()
-            ffmpeg_process = None
-
+        # FFmpeg 프로세스 종료        
+        if self.ffmpeg_process:
+            self.ffmpeg_process.stdin.close()
+            self.ffmpeg_process.wait()
+            
 @router.get("/", response_class=HTMLResponse)
 async def index():
     with open(os.path.join(ROOT, "..\\static\\index.html"), encoding='utf-8') as f:
@@ -314,24 +361,41 @@ async def websocket_endpoint(websocket: WebSocket):
                 logging.info("icecandidate")
                 candidate_info = message["candidate"]
                 # component 변환
-                if candidate_info['component'] == "rtp":
-                    c = 1
-                elif candidate_info['component'] == "rtcp":
-                    c = 2 
-                candidate = RTCIceCandidate(
-                    component=c,
-                    foundation=candidate_info['foundation'],
-                    ip=candidate_info['address'],
-                    port=candidate_info['port'],
-                    priority=candidate_info['priority'],
-                    protocol=candidate_info['protocol'],
-                    type=candidate_info['type'],
-                    sdpMid=candidate_info['sdpMid'],
-                    tcpType=candidate_info['tcpType'],
-                    sdpMLineIndex=candidate_info["sdpMLineIndex"]  # 클라이언트에서 보낸 sdpMLineIndex 값
-                )
-                await pc.addIceCandidate(candidate)
+                if "sdp" in message:
+                    print('sdp in message')
+                    sdp = message["sdp"]
+                    if isinstance(sdp, str):
+                        await pc.setRemoteDescription(RTCSessionDescription(sdp=sdp, type=message["type"]))
+                        
+                        answer = await pc.createAnswer()
+                        await pc.setLocalDescription(answer)
+                        
+                        await websocket.send_text(json.dumps({"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}))
+                    else:
+                        print(f"Received SDP is not a string: {sdp}")
 
+                elif message.get("type") == "candidate":
+                    candidate = message["candidate"]
+                    print('candidate:', candidate['candidate'])
+                    ip = candidate['candidate'].split(' ')[4]
+                    port = candidate['candidate'].split(' ')[5]
+                    protocol = candidate['candidate'].split(' ')[7]
+                    priority = candidate['candidate'].split(' ')[3]
+                    foundation = candidate['candidate'].split(' ')[0]
+                    component = candidate['candidate'].split(' ')[1]
+                    type = candidate['candidate'].split(' ')[7]
+                    rtc_candidate = RTCIceCandidate(
+                        ip=ip,
+                        port=port,
+                        protocol=protocol,
+                        priority=priority,
+                        foundation=foundation,
+                        component=component,
+                        type=type,
+                        sdpMid=candidate['sdpMid'],
+                        sdpMLineIndex=candidate['sdpMLineIndex']
+                    )
+                    await pc.addIceCandidate(rtc_candidate)
         except WebSocketDisconnect:
             #print(f"Client disconnected: {client_id}")
             pcs.remove(pc)

@@ -328,28 +328,29 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # ICE candidate 수신 및 추가
             # 웹소켓에서 수신한 메세지에 candidate가 포함되어 있으면 이를 RTCIceCandidate 객체로 변환한 후, pc.addIceCandidate(candidate)를 호출하여 후보를 추가함
-            if "candidate" in message:
-                logging.info("icecandidate")
-                candidate_info = message["candidate"]
-                # component 변환
-                if candidate_info['component'] == "rtp":
-                    c = 1
-                elif candidate_info['component'] == "rtcp":
-                    c = 2 
-                candidate = RTCIceCandidate(
-                    component=c,
-                    foundation=candidate_info['foundation'],
-                    ip=candidate_info['address'],
-                    port=candidate_info['port'],
-                    priority=candidate_info['priority'],
-                    protocol=candidate_info['protocol'],
-                    type=candidate_info['type'],
-                    sdpMid=candidate_info['sdpMid'],
-                    tcpType=candidate_info['tcpType'],
-                    sdpMLineIndex=candidate_info["sdpMLineIndex"]  # 클라이언트에서 보낸 sdpMLineIndex 값
+            elif message.get("type") == "candidate":
+                candidate = message["candidate"]
+                print('candidate:', candidate['candidate'])
+                ip = candidate['candidate'].split(' ')[4]
+                port = candidate['candidate'].split(' ')[5]
+                protocol = candidate['candidate'].split(' ')[7]
+                priority = candidate['candidate'].split(' ')[3]
+                foundation = candidate['candidate'].split(' ')[0]
+                component = candidate['candidate'].split(' ')[1]
+                type = candidate['candidate'].split(' ')[7]
+                rtc_candidate = RTCIceCandidate(
+                    ip=ip,
+                    port=port,
+                    protocol=protocol,
+                    priority=priority,
+                    foundation=foundation,
+                    component=component,
+                    type=type,
+                    sdpMid=candidate['sdpMid'],
+                    sdpMLineIndex=candidate['sdpMLineIndex']
                 )
-                await pc.addIceCandidate(candidate)
-
+                await pc.addIceCandidate(rtc_candidate)
+                
         except WebSocketDisconnect:
             #print(f"Client disconnected: {client_id}")
             pcs.remove(pc)

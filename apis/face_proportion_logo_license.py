@@ -64,7 +64,6 @@ tracker_labels = []
 frame_count = 0
 
 class MediaTransformTrack(MediaStreamTrack):
-    global model
 
     def __init__(self, track, kind):
         super().__init__()
@@ -72,10 +71,38 @@ class MediaTransformTrack(MediaStreamTrack):
         self.kind = kind
         self.is_processing = False
 
+        # FFmpeg 명령어 설정
+        ffmpeg_command = [
+            'ffmpeg', '-re',
+            '-f', 'rawvideo',
+            '-pixel_format', 'bgr24',
+            '-video_size', '640x480',  # 비디오 크기 설정
+            '-r', '15',
+            '-i', '-',  # stdin에서 입력받음
+            '-f', 'lavfi',
+            '-i', 'anullsrc=r=44100:cl=stereo',
+            '-c:v', 'libx264',
+            '-b:v', '1500k',  # 비디오 비트레이트
+            '-c:a', 'aac',  # 오디오 코덱 설정 (빈 오디오를 aac로 인코딩
+            '-b:a', '128k',  # 오디오 비트레이트
+            '-preset', 'veryfast',
+             '-maxrate', '3000k',
+             '-bufsize', '6000k',
+            '-pix_fmt', 'yuv420p',
+            '-g', '30',
+            '-f', 'flv',
+            'rtmp://a.rtmp.youtube.com/live2/sj16-j2mx-gff2-t3d9-464e'  # YouTube RTMP URL과 스트림 키 설정
+        ]
+
+        # FFmpeg 프로세스를 시작
+        self.ffmpeg_process = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE)
+        print('송출')
 
     async def recv(self):
         global frame_count, fps_start_time  # 글로벌 변수 사용
         global model, known_face_embeddings, known_face_names, trackers, tracker_faces
+
+        frame = await self.track.recv()
 
         if self.kind == 'video':
 
@@ -184,7 +211,7 @@ class MediaTransformTrack(MediaStreamTrack):
                             cv2.circle(mask, center, radius + 10, (255, 255, 255), -1)
 
                             # 블러 처리된 이미지를 생성하고 원형 마스크를 적용하여 블러 처리
-                            blurred_img = cv2.GaussianBlur(image_bgr, (11, 11), 20)
+                            blurred_img = cv2.GaussianBlur(image_bgr, (21, 21), 20)
                             image_bgr = np.where(mask == (255, 255, 255), blurred_img, image_bgr)
                         else:
                             # 추적 실패 시 해당 추적기 제거
@@ -228,6 +255,8 @@ class MediaTransformTrack(MediaStreamTrack):
             self.is_processing = False
             total_time = time.perf_counter() - start_time
             print(f"총 처리 시간: {total_time:.4f} 초")
+
+            self.ffmpeg_process.stdin.write(image_bgr.tobytes())
             return new_frame
         elif self.kind == "audio":
             #print("오디오 처리 중")
@@ -338,7 +367,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 candidate = RTCIceCandidate(
                     component=c,
                     foundation=candidate_info['foundation'],
-                    ip=candidate_info['address'],
+                    ip=candidate_info['ip'],
                     port=candidate_info['port'],
                     priority=candidate_info['priority'],
                     protocol=candidate_info['protocol'],
