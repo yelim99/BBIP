@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Home</title>
+</head>
+<body>
+<h1>Welcome to the Home Page!</h1>
+<a href="/oauth2/authorization/google">Login with Google</a>  <!-- Google 로그인 링크 -->
+<form id="logoutForm" action="/api/auth/logout" method="POST">
+  <button type="submit">로그아웃</button>
+</form>
+</body>
+</html>

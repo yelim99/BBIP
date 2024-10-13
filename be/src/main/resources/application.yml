@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: be
+
+  config:
+    import: application-secret.yml
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${OAUTH_GOOGLE_REDIRECT_URI}
+            scope:
+              - profile
+              - email
+            client-name: Google
+            authorization-grant-type: ${OAUTH_GOOGLE_AUTHORIZATION_GRANT_TYPE}
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            user-name-attribute: sub
+
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        storage_engine: innodb
+        format_sql: true
+        use_sql_comments: true
+        globally_quoted_identifiers: true
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+
+  # Multipart
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${MULTIPART_FILE_SIZE}
+      max-request-size: ${MULTIPART_FILE_SIZE}
+
+
+cloud:
+  aws:
+    credentials:
+      accessKey: ${AWS_ACCESSKEY}
+      secretKey: ${AWS_SECRETKEY}
+
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_BUCKET_NAME}
+
+
+video:
+  upload:
+    dir: ${VIDEO_DIR}
+    original-file-name: ${VIDEO_ORIGINAL}
+    expire-time: ${VIDEO_EXPIRE}
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  show-actuator: true
+  default-produces-media-type: application/json
+
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        security: DEBUG
+#        web:
+#          socket: DEBUG
+#          socket.sockjs: DEBUG
+#          socket.messaging: DEBUG
+#        messaging: DEBUG
