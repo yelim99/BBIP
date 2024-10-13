@@ -100,7 +100,6 @@ class MediaTransformTrack(MediaStreamTrack):
         self.ffmpeg_process = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE)
         print('송출')
 
-
     async def recv(self):
         global frame_count, fps_start_time  # 글로벌 변수 사용
         global model, known_face_embeddings, known_face_names, trackers, tracker_faces
@@ -310,10 +309,10 @@ async def websocket_endpoint(websocket: WebSocket):
     # STUN/TURN 서버 설정
     pc._ice_servers = [
         {
-            'urls': 'stun:stun.l.google.com:19302'  # STUN 서버
+            'urls': ['stun:stun.l.google.com:19302'],  # STUN 서버
         },
         {
-            'urls': 'turn:j11a203.p.ssafy.io',  # TURN 서버
+            'urls': ['turn:j11a203.p.ssafy.io'],  # TURN 서버
             'username': 'username',  # TURN 서버 사용자 이름
             'credential': 'password'  # TURN 서버 비밀번호
         }

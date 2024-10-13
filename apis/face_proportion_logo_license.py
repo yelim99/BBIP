@@ -24,6 +24,7 @@ if os.name == 'nt':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 router = APIRouter()
+stream_key = os.getenv("STREAM_KEY")
 
 # 기본 설정
 ROOT = os.path.dirname(__file__)
@@ -91,7 +92,7 @@ class MediaTransformTrack(MediaStreamTrack):
             '-pix_fmt', 'yuv420p',
             '-g', '30',
             '-f', 'flv',
-            'rtmp://a.rtmp.youtube.com/live2/sj16-j2mx-gff2-t3d9-464e'  # YouTube RTMP URL과 스트림 키 설정
+            'rtmp://a.rtmp.youtube.com/live2/{stream_key}'  # YouTube RTMP URL과 스트림 키 설정
         ]
 
         # FFmpeg 프로세스를 시작

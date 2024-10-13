@@ -1,6 +1,6 @@
 var pc = null;
 // WebSocket 연결
-const socket = new WebSocket('ws://127.0.0.1:8000/noblur/ws');
+const socket = new WebSocket('ws://localhost:8000/noblur/ws');
 
 socket.onopen = () => {
     console.log("websocket 연결됨");
